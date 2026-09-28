@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Control de Tickets y Semáforo Municipal</h2>
+
+    <!-- Botones de Acción Mínimos Exigidos por la Pauta -->
+    <div class="d-flex justify-content-between mb-3">
+        <a href="#" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Agregar Ticket</a>
+        <div class="d-flex">
+            <input type="text" class="form-control me-2" placeholder="Buscar ticket...">
+            <button class="btn btn-outline-secondary">Buscar</button>
+        </div>
+    </div>
+
+    <!-- Tabla de Contenidos cargada vía Django ORM -->
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>ID</th>
+                <th>Solicitante</th>
+                <th>Sector</th>
+                <th>Delegación</th>
+                <th>Funcionario</th>
+                <th>Semáforo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ticket in tickets %}
+            <tr>
+                <td>{{ ticket.id }}</td>
+                <td>{{ ticket.solicitante }}</td>
+                <td>{{ ticket.sector }}</td>
+                <td>{{ ticket.delegacion.nombre }}</td>
+                <td>{{ ticket.funcionario_asignado.nombre }}</td>
+                <td>
+                    {% if ticket.estado_color == 'VERDE' %}
+                        <span class="badge bg-success">A tiempo</span>
+                    {% elif ticket.estado_color == 'AMARILLO' %}
+                        <span class="badge bg-warning text-dark">Próximo</span>
+                    {% elif ticket.estado_color == 'ROJO' %}
+                        <span class="badge bg-danger">Vencido</span>
+                    {% else %}
+                        <span class="badge bg-secondary">Reciente</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- Botones requeridos por la Rúbrica -->
+                    <a href="#" class="btn btn-sm btn-warning">Modificar</a>
+                    <a href="#" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">No hay tickets registrados en la base de datos.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

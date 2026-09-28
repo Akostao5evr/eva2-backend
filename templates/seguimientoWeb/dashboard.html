@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">Dashboard de Gestión Territorial - La Serena</h2>
+
+    <!-- Tarjetas de Resumen KPI -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-white bg-primary shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-list-task me-2"></i>Total Tickets</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ total_tickets }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-success shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-check-circle-fill me-2"></i>Cumplimiento A Tiempo</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ tickets_a_tiempo }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card text-white bg-danger shadow-sm mb-3">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Tickets Vencidos</h5>
+                    <p class="card-text display-6 font-weight-bold">{{ tickets_vencidos }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cobertura por Delegación -->
+    <div class="card shadow-sm">
+        <div class="card-header bg-dark text-white">
+            <h5 class="mb-0">Delegaciones Municipales Activas</h5>
+        </div>
+        <div class="card-body">
+            <ul class="list-group list-group-flush">
+                {% for del in delegaciones %}
+                <li class="list-group-item d-flex justify-content-between align-items-center">
+                    {{ del.nombre }}
+                    <span class="badge bg-primary rounded-pill">Operativa</span>
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

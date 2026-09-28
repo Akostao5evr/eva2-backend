@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SGR - Municipalidad de La Serena{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Iconos de Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <style>
+        body {
+            background-color: #f8f9fa;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            letter-spacing: 0.5px;
+        }
+        .main-content {
+            flex: 1;
+        }
+        footer {
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navegación Principal requerida por la rúbrica -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-building-fill-gear me-2"></i>SGR - La Serena
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dashboard_delegaciones' %}">
+                            <i class="bi bi-speedometer2 me-1"></i> Dashboard KPI
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_tickets' %}">
+                            <i class="bi bi-ticket-perforated me-1"></i> Control de Tickets
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_actividades' %}">
+                            <i class="bi bi-clipboard-check me-1"></i> Actividades y Evidencias
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_funcionarios' %}">
+                            <i class="bi bi-people-fill me-1"></i> Funcionarios
+                        </a>
+                    </li>
+                </ul>
+
+                <!-- Acceso al Administrador de Django exigido en la revisión -->
+                <div class="d-flex">
+                    <a href="/admin/" target="_blank" class="btn btn-outline-light btn-sm">
+                        <i class="bi bi-shield-lock-fill me-1"></i> Django Admin
+                    </a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Contenido Dinámico de cada Vista -->
+    <main class="main-content py-4">
+        {% block content %}
+        <!-- Aquí se inyecta listado_tickets.html -->
+        {% endblock %}
+    </main>
+
+    <!-- Pie de Página Institucional -->
+    <footer class="bg-dark text-white text-center py-3">
+        <div class="container">
+            <small>Ilustre Municipalidad de La Serena &copy; 2026 - Sistema de Gestión y Registro (SGR)</small>
+        </div>
+    </footer>
+
+    <!-- JS de Bootstrap -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

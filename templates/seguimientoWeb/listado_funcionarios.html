@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-3">Nómina de Funcionarios por Delegación</h2>
+
+    <div class="d-flex justify-content-between mb-3">
+        <!-- Botón Agregar Funcionario -->
+        <a href="{% url 'agregar_funcionario' %}" class="btn btn-primary">
+            <i class="bi bi-person-plus-fill me-1"></i> Agregar Funcionario
+        </a>
+
+        <!-- Formulario de Búsqueda -->
+        <form method="GET" class="d-flex">
+            <input type="text" name="q" value="{{ query }}" class="form-control me-2" placeholder="Buscar por RUT...">
+            <button type="submit" class="btn btn-outline-secondary">Buscar</button>
+        </form>
+    </div>
+
+    <table class="table table-striped table-hover shadow-sm">
+        <thead class="table-dark">
+            <tr>
+                <th>RUT</th>
+                <th>Nombre Completo</th>
+                <th>Delegación</th>
+                <th>Cargo</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for func in funcionarios %}
+            <tr>
+                <td>{{ func.rut }}</td>
+                <td>{{ func.nombre }} {{ func.apellido }}</td>
+                <td><span class="badge bg-info text-dark">{{ func.delegacion.nombre }}</span></td>
+                <td>{{ func.cargo.nombre }}</td>
+                <td>
+                    <a href="{% url 'editar_funcionario' func.id %}" class="btn btn-sm btn-warning me-1">Modificar</a>
+                    <a href="{% url 'eliminar_funcionario' func.id %}" class="btn btn-sm btn-danger">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron funcionarios.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
