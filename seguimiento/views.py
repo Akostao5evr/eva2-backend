@@ -1,7 +1,9 @@
+import uuid
 from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
 from .models import CompromisoTicket, Actividad
 from gestion.models import Funcionario, Delegacion
-from .forms import FuncionarioForm
+from .forms import FuncionarioForm, ActividadForm
 
 # 1. Vista de Tickets y Semáforo
 def listado_tickets(request):
@@ -82,3 +84,18 @@ def dashboard_delegaciones(request):
         'delegaciones': delegaciones,
     }
     return render(request, 'seguimientoWeb/dashboard.html', context)
+
+def crear_actividad(request):
+    if request.method == 'POST':
+        form = ActividadForm(request.POST)
+        if form.is_valid():
+            actividad = form.save(commit=False)
+            # Generar código único inmutable (ej: ACT-A1B2C3D4)
+            actividad.codigo_verificador = f"ACT-{uuid.uuid4().hex[:8].upper()}"
+            actividad.fecha_registro = timezone.now()
+            actividad.save()
+            return redirect('listado_actividades')
+    else:
+        form = ActividadForm()
+
+    return render(request, 'crear_actividad.html', {'form': form})
