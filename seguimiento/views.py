@@ -98,4 +98,4 @@ def crear_actividad(request):
     else:
         form = ActividadForm()
 
-    return render(request, 'crear_actividad.html', {'form': form})
+    return render(request, 'seguimientoWeb/crear_actividad.html', {'form': form})
