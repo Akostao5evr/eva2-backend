@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4" style="max-width: 600px;">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Nueva Actividad</h4>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label">Funcionario</label>
+                    {{ form.funcionario }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Delegación</label>
+                    {{ form.delegacion }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Descripción</label>
+                    {{ form.descripcion }}
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Estado</label>
+                    {{ form.estado }}
+                </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <a href="{% url 'listado_actividades' %}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-success">Guardar Actividad</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
