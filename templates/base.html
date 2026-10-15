@@ -33,7 +33,7 @@
 </head>
 <body>
 
-    <!-- Navegación Principal -->
+    <!-- Navegación Principal basada estrictamente en la Pauta -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm" style="background-color: #AD0000 !important;">
         <div class="container-fluid">
             <a class="navbar-brand" href="{% url 'dashboard_delegaciones' %}">
@@ -46,33 +46,43 @@
                 <ul class="navbar-nav me-auto">
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'dashboard_delegaciones' %}">
-                            <i class="bi bi-speedometer2 me-1"></i> Dashboard KPI
+                            <i class="bi bi-speedometer2 me-1"></i> Inicio
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'listado_actividades' %}">
-                            <i class="bi bi-clipboard-check me-1"></i> Atenciones y Actividades
+                        <a class="nav-link" href="{% url 'listado_delegaciones' %}">
+                            <i class="bi bi-geo-alt me-1"></i> Delegaciones
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_roles' %}">
+                            <i class="bi bi-shield-check me-1"></i> Roles
                         </a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{% url 'listado_funcionarios' %}">
-                            <i class="bi bi-people-fill me-1"></i> Funcionarios
+                            <i class="bi bi-people-fill me-1"></i> Usuarios y Funcionarios
                         </a>
                     </li>
-
-                    <!-- Menú desplegable para los 6 CRUDs exigidos -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="bi bi-table me-1"></i> Tablas Maestras
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_items' %}">
+                            <i class="bi bi-list-check me-1"></i> Ítems y metas
                         </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="{% url 'listado_delegaciones' %}">Delegaciones</a></li>
-                            <li><a class="dropdown-item" href="{% url 'listado_roles' %}">Roles</a></li>
-                            <li><a class="dropdown-item" href="{% url 'listado_funcionarios' %}">Usuarios</a></li>
-                            <li><a class="dropdown-item" href="{% url 'listado_items' %}">Ítems y metas</a></li>
-                            <li><a class="dropdown-item" href="{% url 'listado_tipos_atencion' %}">Tipo de Atención</a></li>
-                            <li><a class="dropdown-item" href="{% url 'listado_sub_atenciones' %}">Sub Atención</a></li>
-                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_tipos_atencion' %}">
+                            <i class="bi bi-tags me-1"></i> Tipo de Atención
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_sub_atenciones' %}">
+                            <i class="bi bi-tag me-1"></i> Sub Atención
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'listado_actividades' %}">
+                            <i class="bi bi-clipboard-check me-1"></i> Atenciones
+                        </a>
                     </li>
                 </ul>
 
