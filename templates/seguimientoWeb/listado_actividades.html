@@ -1,21 +1,39 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-3">Registro de Actividades y Evidencias Fotográficas</h2>
-
-    <div class="d-flex justify-content-between mb-3">
-        <a href="{% url 'crear_actividad' %}" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i> Nueva Actividad</a>
-        <div class="d-flex">
-            <input type="text" class="form-control me-2" placeholder="Buscar por código...">
-            <button class="btn btn-outline-secondary">Buscar</button>
-        </div>
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <div class="text-muted small">Gestión municipal / Atenciones y Actividades</div>
+        <h3 class="fw-bold m-0">Registro de Atenciones y Evidencias</h3>
     </div>
+    <a href="{% url 'crear_actividad' %}" class="btn btn-muni px-3 py-2">
+        + Nuevo registro
+    </a>
+</div>
 
-    <table class="table table-striped table-hover shadow-sm">
-        <thead class="table-dark">
+<form method="GET" class="row g-2 align-items-end mb-4">
+    <div class="col-md-6">
+        <label class="form-label text-muted small mb-1">Búsqueda inteligente</label>
+        <input type="text" name="q" class="form-control" placeholder="Buscar por código, funcionario o descripción...">
+    </div>
+    <div class="col-md-3">
+        <a href="?export=excel" class="btn btn-muni-soft w-100">Exportar a Excel</a>
+    </div>
+    <div class="col-md-3">
+        <select name="estado" class="form-select">
+            <option value="">Filtrar estado</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="RECHAZADO">Rechazado</option>
+        </select>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-muni">
+        <thead>
             <tr>
-                <th>Código Único</th>
+                <th>Código</th>
                 <th>Funcionario</th>
                 <th>Delegación</th>
                 <th>Descripción</th>
@@ -27,31 +45,45 @@
         <tbody>
             {% for act in actividades %}
             <tr>
-                <td><code>{{ act.codigo_verificador }}</code></td>
-                <td>{{ act.funcionario.nombre }}</td>
+                <td><strong>{{ act.codigo_verificador }}</strong></td>
+                <td>{{ act.funcionario.nombre }} {{ act.funcionario.apellido }}</td>
                 <td>{{ act.delegacion.nombre }}</td>
                 <td>{{ act.descripcion }}</td>
                 <td>{{ act.fecha_registro|date:"d/m/Y H:i" }}</td>
                 <td>
                     {% if act.estado == 'APROBADO' %}
-                        <span class="badge bg-success">Aprobado</span>
+                        Aprobado
                     {% elif act.estado == 'RECHAZADO' %}
-                        <span class="badge bg-danger">Rechazado</span>
+                        Rechazado
                     {% else %}
-                        <span class="badge bg-warning text-dark">Pendiente</span>
+                        Pendiente
                     {% endif %}
                 </td>
                 <td>
-                    <a href="#" class="btn btn-sm btn-warning me-1">Modificar</a>
-                    <a href="#" class="btn btn-sm btn-danger">Eliminar</a>
+                    <a href="#" class="action-link">Ver</a>
+                    <a href="#" class="action-link">Editar</a>
+                    <a href="#" class="action-link text-secondary">Eliminar</a>
                 </td>
             </tr>
             {% empty %}
             <tr>
-                <td colspan="7" class="text-center">No hay actividades registradas.</td>
+                <td colspan="7" class="text-center text-muted py-4">No hay actividades registradas.</td>
             </tr>
             {% endfor %}
         </tbody>
     </table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted small">
+        Mostrando 1 a {{ actividades|length }} de {{ actividades|length }} registros
+    </div>
+    <nav>
+        <ul class="pagination pagination-sm m-0">
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            <li class="page-item active"><span class="page-link" style="background-color: #AD0000; border-color: #AD0000;">1</span></li>
+            <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+        </ul>
+    </nav>
 </div>
 {% endblock %}

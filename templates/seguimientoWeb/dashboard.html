@@ -1,52 +1,71 @@
 {% extends 'base.html' %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2 class="mb-4">Dashboard de Gestión Territorial - La Serena</h2>
+<div class="d-flex justify-content-between align-items-start mb-4">
+    <div>
+        <div class="text-muted small">Gestión municipal / Inicio</div>
+        <h3 class="fw-bold m-0">Tablero de Gestión Territorial - La Serena</h3>
+    </div>
+    <a href="{% url 'crear_actividad' %}" class="btn btn-muni px-3 py-2">
+        + Nueva Atención
+    </a>
+</div>
 
-    <!-- Tarjetas de Resumen KPI -->
-    <div class="row mb-4">
-        <div class="col-md-4">
-            <div class="card text-white bg-primary shadow-sm mb-3">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-list-task me-2"></i>Total Tickets</h5>
-                    <p class="card-text display-6 font-weight-bold">{{ total_tickets }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-success shadow-sm mb-3">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-check-circle-fill me-2"></i>Cumplimiento A Tiempo</h5>
-                    <p class="card-text display-6 font-weight-bold">{{ tickets_a_tiempo }}</p>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-white bg-danger shadow-sm mb-3">
-                <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Tickets Vencidos</h5>
-                    <p class="card-text display-6 font-weight-bold">{{ tickets_vencidos }}</p>
-                </div>
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card border shadow-sm mb-3">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase">Total Compromisos / Tickets</div>
+                <p class="display-6 fw-bold m-0" style="color: #AD0000;">{{ total_tickets }}</p>
             </div>
         </div>
     </div>
-
-    <!-- Cobertura por Delegación -->
-    <div class="card shadow-sm">
-        <div class="card-header bg-dark text-white">
-            <h5 class="mb-0">Delegaciones Municipales Activas</h5>
-        </div>
-        <div class="card-body">
-            <ul class="list-group list-group-flush">
-                {% for del in delegaciones %}
-                <li class="list-group-item d-flex justify-content-between align-items-center">
-                    {{ del.nombre }}
-                    <span class="badge bg-primary rounded-pill">Operativa</span>
-                </li>
-                {% endfor %}
-            </ul>
+    <div class="col-md-4">
+        <div class="card border shadow-sm mb-3">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase">Cumplimiento A Tiempo (Verde)</div>
+                <p class="display-6 fw-bold text-success m-0">{{ tickets_a_tiempo }}</p>
+            </div>
         </div>
     </div>
+    <div class="col-md-4">
+        <div class="card border shadow-sm mb-3">
+            <div class="card-body">
+                <div class="text-muted small fw-bold text-uppercase">Vencidos (Rojo)</div>
+                <p class="display-6 fw-bold text-danger m-0">{{ tickets_vencidos }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mb-2">
+    <h5 class="fw-bold m-0">Delegaciones Municipales</h5>
+</div>
+
+<div class="table-responsive">
+    <table class="table table-muni">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Nombre Delegación</th>
+                <th>Comuna</th>
+                <th>Estado</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for del in delegaciones %}
+            <tr>
+                <td>DEL0{{ forloop.counter }}</td>
+                <td>{{ del.nombre }}</td>
+                <td>La Serena</td>
+                <td>{% if del.estado %}Activa{% else %}Inactiva{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="4" class="text-center text-muted py-3">No hay delegaciones registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
 </div>
 {% endblock %}
