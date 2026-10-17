@@ -147,7 +147,7 @@ def crear_actividad(request):
         form = ActividadForm()
 
     tipos_atencion = TipoAtencion.objects.filter(estado=True).prefetch_related('subatenciones')
-    return render(request, 'seguimientoweb/crear_actividad.html', {
+    return render(request, 'seguimientoWeb/crear_actividad.html', {
         'form': form,
         'tipos_atencion': tipos_atencion
     })  
