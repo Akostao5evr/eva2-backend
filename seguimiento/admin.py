@@ -1,13 +1,23 @@
 from django.contrib import admin
-from .models import Actividad, Evidencia, CompromisoTicket
+from .models import Actividad, Evidencia, CompromisoTicket, TipoAtencion, SubAtencion
 
-# Register your models here.
+@admin.register(TipoAtencion)
+class TipoAtencionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'codigo', 'nombre', 'estado')
+    list_filter = ('estado',)
+    search_fields = ('codigo', 'nombre')
+
+@admin.register(SubAtencion)
+class SubAtencionAdmin(admin.ModelAdmin):
+    list_display = ('id', 'codigo', 'nombre', 'tipo_atencion', 'estado')
+    list_filter = ('tipo_atencion', 'estado')
+    search_fields = ('codigo', 'nombre')
 
 @admin.register(Actividad)
 class ActividadAdmin(admin.ModelAdmin):
-    list_display = ('codigo_verificador', 'funcionario', 'delegacion', 'fecha_registro', 'estado')
-    list_filter = ('estado', 'delegacion')
-    search_fields = ('codigo_verificador', 'descripcion')
+    list_display = ('codigo_verificador', 'solicitante', 'tipo_atencion', 'sub_atencion', 'funcionario', 'delegacion', 'fecha_registro', 'estado')
+    list_filter = ('estado', 'delegacion', 'tipo_atencion')
+    search_fields = ('codigo_verificador', 'solicitante', 'descripcion')
 
 @admin.register(Evidencia)
 class EvidenciaAdmin(admin.ModelAdmin):
