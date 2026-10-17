@@ -23,16 +23,16 @@
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="form-label text-secondary small fw-bold">Tipo de Atención *</label>
-                <select id="selectTipo" class="form-select" onchange="actualizarSubAtenciones()" required>
+                <select name="tipo_atencion" id="selectTipo" class="form-select" onchange="actualizarSubAtenciones()" required>
                     <option value="">Seleccione tipo...</option>
-                    <option value="SOCIAL">Social</option>
-                    <option value="SALUD">Salud</option>
-                    <option value="EDUCACION">Educación</option>
+                    {% for tipo in tipos_atencion %}
+                        <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div class="col-md-6">
                 <label class="form-label text-secondary small fw-bold">Sub Atención *</label>
-                <select id="selectSub" class="form-select" required>
+                <select name="sub_atencion" id="selectSub" class="form-select" required>
                     <option value="">Seleccione primero un Tipo de Atención...</option>
                 </select>
             </div>
@@ -60,44 +60,84 @@
             </div>
             <div class="d-flex gap-2">
                 <a href="{% url 'listado_actividades' %}" class="btn btn-light border px-4">Cancelar</a>
-                <button type="submit" id="btnSubmit" class="btn btn-muni px-4">Guardar atención</button>
+                <button type="submit" id="btnSubmit" class="btn text-white px-4" style="background-color: #AD0000;">Guardar atención</button>
             </div>
         </div>
     </form>
 </div>
 
-<script>
-    // Relación dependiente Tipo de Atención -> Sub Atención (Requisito A2 y ACT-05)
-    const subOpciones = {
-        'SOCIAL': ['Ayuda social', 'Orientación social'],
-        'SALUD': ['Consulta médica', 'Operativo salud'],
-        'EDUCACION': ['Beca municipal', 'Apoyo escolar']
-    };
-
+<<script>
     function actualizarSubAtenciones() {
-        const tipo = document.getElementById('selectTipo').value;
-        const subSelect = document.getElementById('selectSub');
-        subSelect.innerHTML = '<option value="">Seleccione sub atención...</option>';
+        const selectTipo = document.getElementById('selectTipo');
+        const selectSub = document.getElementById('selectSub');
+        const tipoId = selectTipo.value;
 
-        if (tipo && subOpciones[tipo]) {
-            subOpciones[tipo].forEach(function(item) {
-                const opt = document.createElement('option');
-                opt.value = item;
-                opt.textContent = item;
-                subSelect.appendChild(opt);
-            });
+        selectSub.innerHTML = '<option value="">Cargando sub atenciones...</option>';
+        selectSub.disabled = true;
+
+        if (!tipoId) {
+            selectSub.innerHTML = '<option value="">Seleccione primero un Tipo de Atención...</option>';
+            selectSub.disabled = false;
+            return;
         }
+
+        // Consulta dinámica al endpoint JSON sin mezclar etiquetas Django en JS
+        fetch('/seguimientoWeb/api/subatenciones/' + tipoId + '/')
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                selectSub.innerHTML = '<option value="">Seleccione sub atención...</option>';
+                if (data.length === 0) {
+                    selectSub.innerHTML = '<option value="">(No hay sub atenciones registradas)</option>';
+                } else {
+                    data.forEach(function(item) {
+                        const opt = document.createElement('option');
+                        opt.value = item.id;
+                        opt.textContent = item.nombre;
+                        selectSub.appendChild(opt);
+                    });
+                }
+                selectSub.disabled = false;
+            })
+            .catch(function(err) {
+                console.error(err);
+                selectSub.innerHTML = '<option value="">Error al cargar opciones</option>';
+                selectSub.disabled = false;
+            });
     }
 
-    // Estilizar los widgets de Django automáticamente con clases Bootstrap
     document.addEventListener('DOMContentLoaded', function() {
         const selects = document.querySelectorAll('#formCrearActividad select');
-        selects.forEach(s => s.classList.add('form-select'));
+        selects.forEach(function(s) { s.classList.add('form-select'); });
+
         const textareas = document.querySelectorAll('#formCrearActividad textarea');
-        textareas.forEach(t => {
+        textareas.forEach(function(t) {
             t.classList.add('form-control');
             t.rows = 3;
             t.placeholder = 'Describa la solicitud y los antecedentes necesarios.';
+        });
+
+        const form = document.getElementById('formCrearActividad');
+        form.addEventListener('submit', function(e) {
+            if (!form.checkValidity()) {
+                return;
+            }
+            e.preventDefault();
+            Swal.fire({
+                title: '¿Confirmar registro?',
+                text: "Se generará un comprobante correlativo para esta atención.",
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#AD0000',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: 'Sí, guardar',
+                cancelButtonText: 'Revisar'
+            }).then(function(result) {
+                if (result.isConfirmed) {
+                    form.submit();
+                }
+            });
         });
     });
 </script>

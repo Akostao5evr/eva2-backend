@@ -50,4 +50,6 @@ urlpatterns = [
     path('sub-atenciones/agregar/', views.agregar_sub_atencion, name='agregar_sub_atencion'),
     path('sub-atenciones/editar/<int:id>/', views.editar_sub_atencion, name='editar_sub_atencion'),
     path('sub-atenciones/eliminar/<int:id>/', views.eliminar_sub_atencion, name='eliminar_sub_atencion'),
+
+    path('api/subatenciones/<int:tipo_id>/', views.api_subatenciones, name='api_subatenciones'),
 ]

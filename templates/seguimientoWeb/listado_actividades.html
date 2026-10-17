@@ -86,4 +86,25 @@
         </ul>
     </nav>
 </div>
+<!-- Contenedor seguro de mensajes Django -->
+{% if messages %}
+    <div id="django-messages" style="display: none;">
+        {% for message in messages %}
+            <div data-tag="{% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% else %}info{% endif %}" data-text="{{ message|escapejs }}"></div>
+        {% endfor %}
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const msgs = document.querySelectorAll('#django-messages div');
+            msgs.forEach(function(el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Atención Ciudadana',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
+                });
+            });
+        });
+    </script>
+{% endif %}
 {% endblock %}

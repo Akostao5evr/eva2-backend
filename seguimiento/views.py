@@ -1,7 +1,9 @@
 import csv
+import time
 import uuid
 import random
 from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
@@ -119,17 +121,36 @@ def crear_actividad(request):
         form = ActividadForm(request.POST)
         if form.is_valid():
             actividad = form.save(commit=False)
-            actividad.codigo_verificador = f"ACT-{uuid.uuid4().hex[:8].upper()}"
-            actividad.fecha_registro = timezone.now()
+            
+            # Asignar solicitante
+            actividad.solicitante = request.POST.get('solicitante', 'Vecino no especificado')
+            
+            # Asignar Tipo y Subatención
+            tipo_id = request.POST.get('tipo_atencion')
+            sub_id = request.POST.get('sub_atencion')
+            if tipo_id:
+                actividad.tipo_atencion_id = tipo_id
+            if sub_id:
+                actividad.sub_atencion_id = sub_id
+            
+            # Generar código verificador correlativo único ACT-XXXXXXXX
+            timestamp_part = str(int(time.time()))[-5:]
+            random_part = f"{random.randint(100, 999)}"
+            actividad.codigo_verificador = f"ACT-{timestamp_part}{random_part}"
+            
             actividad.save()
-            messages.success(request, f'Atención registrada con éxito. Identificador: {actividad.codigo_verificador}')
+            messages.success(request, f"¡Atención registrada correctamente! Código: {actividad.codigo_verificador}")
             return redirect('listado_actividades')
         else:
-            messages.error(request, 'Por favor complete todos los campos obligatorios.')
+            messages.error(request, "Ocurrió un error al validar los datos del formulario.")
     else:
         form = ActividadForm()
-    return render(request, 'seguimientoWeb/crear_actividad.html', {'form': form})
 
+    tipos_atencion = TipoAtencion.objects.filter(estado=True).prefetch_related('subatenciones')
+    return render(request, 'seguimientoweb/crear_actividad.html', {
+        'form': form,
+        'tipos_atencion': tipos_atencion
+    })  
 # ==========================================
 # 1. CRUD DELEGACIONES
 # ==========================================
@@ -381,3 +402,8 @@ def eliminar_sub_atencion(request, id):
     obj.save()
     messages.warning(request, f'La Sub Atención {obj.nombre} fue desactivada.')
     return redirect('listado_sub_atenciones')
+
+def api_subatenciones(request, tipo_id):
+    """Devuelve las subatenciones asociadas a un Tipo de Atención en formato JSON."""
+    subatenciones = SubAtencion.objects.filter(tipo_atencion_id=tipo_id, estado=True).values('id', 'codigo', 'nombre')
+    return JsonResponse(list(subatenciones), safe=False)
