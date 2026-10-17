@@ -1,20 +1,20 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# 1. Delegaciones (Diseño 5 - Pág. 28)
+# 1. Delegaciones
 class Delegacion(models.Model):
-    codigo = models.CharField(max_length=20, unique=True, default="DEL01", verbose_name="Código")
+    codigo = models.CharField(max_length=20, blank=True, null=True, verbose_name="Código")
     nombre = models.CharField(max_length=100, unique=True, verbose_name="Nombre")
     direccion = models.CharField(max_length=200, blank=True, null=True, verbose_name="Dirección")
     comuna = models.CharField(max_length=100, default="La Serena", verbose_name="Comuna")
     estado = models.BooleanField(default=True, verbose_name="Estado")
 
     def __str__(self):
-        return f"{self.codigo} - {self.nombre}"
+        return f"{self.codigo or ''} - {self.nombre}"
 
-# 2. Roles (Diseño 6 - Pág. 28)
+# 2. Roles
 class Cargo(models.Model):
-    codigo = models.CharField(max_length=20, unique=True, default="ROL01", verbose_name="Código")
+    codigo = models.CharField(max_length=20, blank=True, null=True, verbose_name="Código")
     nombre = models.CharField(max_length=100, verbose_name="Rol")
     descripcion = models.TextField(blank=True, null=True, verbose_name="Descripción")
     alcance = models.CharField(max_length=50, default="Autorizado", verbose_name="Alcance")
