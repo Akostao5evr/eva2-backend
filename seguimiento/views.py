@@ -3,6 +3,7 @@ import time
 import uuid
 import random
 from django.contrib.auth.models import User
+from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
 from gestion.models import CodigoRecuperacion
@@ -66,42 +67,35 @@ def logout_view(request):
 
 # Paso 1: Solicitar correo y generar OTP de 6 dígitos en MariaDB
 def recuperar_paso1(request):
-    if request.method == 'POST':
-        email = (request.POST.get('email') or request.POST.get('correo', '')).strip()
-        
-        # Validar si existe un usuario con ese correo o username
-        user = User.objects.filter(email=email).first() or User.objects.filter(username=email).first()
+    # Dentro de recuperar_paso1(request), cuando encuentras al usuario y generas el código OTP:
+    asunto = "Código de Recuperación - SGR Municipalidad de La Serena"
+    mensaje = f"""Estimado/a funcionario/a:
 
-        if user:
-            # Generar código OTP de 6 dígitos
-            codigo_otp = f"{random.randint(100000, 999999)}"
-            expiracion = timezone.now() + timedelta(minutes=15)
+    Se ha solicitado la recuperación de su contraseña en el Sistema de Gestión de Resultados (SGR).
 
-            # Invalidar códigos anteriores no utilizados
-            CodigoRecuperacion.objects.filter(correo=user.email, usado=False).update(usado=True)
+    Su código de verificación OTP es: {codigo_otp}
 
-            # Guardar en la base de datos MariaDB
-            CodigoRecuperacion.objects.create(
-                correo=user.email,
-                codigo=codigo_otp,
-                expira_en=expiracion
-            )
+    Este código tiene una vigencia de 15 minutos. Si usted no realizó esta solicitud, desestime este mensaje.
 
-            # Guardar variables en sesión para los siguientes pasos
-            request.session['recovery_code'] = codigo_otp
-            request.session['recovery_email'] = user.email
+    Atentamente,
+    Ilustre Municipalidad de La Serena
+    """
 
-            # Log para demostración en consola EC2 / QA
-            print(f"\n========================================================")
-            print(f" [SGR LA SERENA] CÓDIGO DE RECUPERACIÓN PARA {user.email}: {codigo_otp}")
-            print(f"========================================================\n")
+    try:
+        send_mail(
+            subject=asunto,
+            message=mensaje,
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+        messages.success(request, f'Código de verificación enviado a {user.email}.')
+    except Exception as e:
+        print(f"Error enviando correo: {e}")
+        # Por si las dudas en la demo, mostramos el código si el puerto o la red fallaran:
+        messages.warning(request, f'No se pudo conectar al servidor de correos. Código demo: {codigo_otp}')
 
-            messages.success(request, f'Código emitido con vigencia de 15 min. (Código demo: {codigo_otp})')
-            return redirect('recuperar_paso2')
-        else:
-            messages.error(request, 'El correo ingresado no se encuentra registrado en el sistema municipal.')
-
-    return render(request, 'auth/recuperar_paso1.html')
+    return redirect('auth/recuperar_paso2.html')
 
 
 # Paso 2: Validación del código OTP ingresado
