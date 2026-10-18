@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Nueva Contraseña - SGR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        .bg-muni { background-color: #AD0000; }
+        .btn-muni { background-color: #AD0000; color: #fff; }
+        .btn-muni:hover { background-color: #8c0000; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="card shadow border-0" style="max-width: 440px; width: 100%;">
+        <div class="card-header bg-muni text-white text-center py-3">
+            <h5 class="fw-bold mb-0">Restablecer Contraseña</h5>
+            <small class="text-white-50">Paso 3 de 3: Finalización</small>
+        </div>
+        <div class="card-body p-4">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Nueva Contraseña (mínimo 6 caracteres)</label>
+                    <input type="password" name="password1" class="form-control" placeholder="••••••••" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Confirmar Nueva Contraseña</label>
+                    <input type="password" name="password2" class="form-control" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-muni w-100 py-2 fw-bold">Actualizar Contraseña</button>
+            </form>
+        </div>
+    </div>
+<!-- SweetAlert2 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    {% if messages %}
+        <div id="auth-messages" style="display: none;">
+            {% for m in messages %}
+                <span data-tag="{% if 'success' in m.tags %}success{% elif 'error' in m.tags %}error{% else %}warning{% endif %}" data-text="{{ m|escapejs }}"></span>
+            {% endfor %}
+        </div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var items = document.querySelectorAll('#auth-messages span');
+                items.forEach(function (el) {
+                    Swal.fire({
+                        icon: el.getAttribute('data-tag'),
+                        title: 'Autenticación',
+                        text: el.getAttribute('data-text'),
+                        confirmButtonColor: '#AD0000'
+                    });
+                });
+            });
+        </script>
+    {% endif %}
+</body>
+</html>

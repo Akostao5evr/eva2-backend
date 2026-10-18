@@ -2,13 +2,16 @@ import csv
 import time
 import uuid
 import random
+from django.contrib.auth.models import User
+from django.utils import timezone
+from datetime import timedelta
+from gestion.models import CodigoRecuperacion
 from django.http import HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.db.models import Q
-from django.utils import timezone
 from .models import CompromisoTicket, Actividad, TipoAtencion, SubAtencion
 from gestion.models import Funcionario, Delegacion, Cargo, ItemMeta
 from .forms import (
@@ -30,64 +33,145 @@ def exportar_excel(nombre_archivo, encabezados, filas):
 # ACCESO Y RECUPERACIÓN DE CONTRASEÑA
 # ==========================================
 def login_view(request):
+    if request.user.is_authenticated:
+        return redirect('dashboard_delegaciones')
+
     if request.method == 'POST':
         usuario = request.POST.get('username', '').strip()
         clave = request.POST.get('password', '').strip()
+
         if not usuario or not clave:
-            messages.error(request, 'Debe completar el usuario y la contraseña.')
+            messages.error(request, 'Debe ingresar su usuario/RUT y contraseña.')
             return render(request, 'auth/login.html')
 
         user = authenticate(request, username=usuario, password=clave)
         if user is not None:
             if user.is_active:
                 login(request, user)
-                messages.success(request, f'Bienvenido al SGR, {user.username}.')
+                messages.success(request, f'Bienvenido/a al SGR, {user.first_name or user.username}.')
                 return redirect('dashboard_delegaciones')
             else:
-                messages.error(request, 'La cuenta se encuentra inactiva.')
+                messages.error(request, 'La cuenta de usuario se encuentra inactiva.')
         else:
-            messages.error(request, 'Credenciales inválidas. Verifique sus datos.')
+            messages.error(request, 'Credenciales inválidas. Verifique su usuario o contraseña.')
+
     return render(request, 'auth/login.html')
+
 
 def logout_view(request):
     logout(request)
+    messages.info(request, 'Sesión finalizada correctamente.')
     return redirect('login')
 
+
+# Paso 1: Solicitar correo y generar OTP de 6 dígitos en MariaDB
 def recuperar_paso1(request):
     if request.method == 'POST':
-        email = request.POST.get('email', '')
-        request.session['recovery_code'] = str(random.randint(100000, 999999))
-        request.session['recovery_email'] = email
-        messages.info(request, f'Si la cuenta existe, recibirás instrucciones. (Código demo QA: {request.session["recovery_code"]})')
-        return redirect('recuperar_paso2')
+        email = (request.POST.get('email') or request.POST.get('correo', '')).strip()
+        
+        # Validar si existe un usuario con ese correo o username
+        user = User.objects.filter(email=email).first() or User.objects.filter(username=email).first()
+
+        if user:
+            # Generar código OTP de 6 dígitos
+            codigo_otp = f"{random.randint(100000, 999999)}"
+            expiracion = timezone.now() + timedelta(minutes=15)
+
+            # Invalidar códigos anteriores no utilizados
+            CodigoRecuperacion.objects.filter(correo=user.email, usado=False).update(usado=True)
+
+            # Guardar en la base de datos MariaDB
+            CodigoRecuperacion.objects.create(
+                correo=user.email,
+                codigo=codigo_otp,
+                expira_en=expiracion
+            )
+
+            # Guardar variables en sesión para los siguientes pasos
+            request.session['recovery_code'] = codigo_otp
+            request.session['recovery_email'] = user.email
+
+            # Log para demostración en consola EC2 / QA
+            print(f"\n========================================================")
+            print(f" [SGR LA SERENA] CÓDIGO DE RECUPERACIÓN PARA {user.email}: {codigo_otp}")
+            print(f"========================================================\n")
+
+            messages.success(request, f'Código emitido con vigencia de 15 min. (Código demo: {codigo_otp})')
+            return redirect('recuperar_paso2')
+        else:
+            messages.error(request, 'El correo ingresado no se encuentra registrado en el sistema municipal.')
+
     return render(request, 'auth/recuperar_paso1.html')
 
+
+# Paso 2: Validación del código OTP ingresado
 def recuperar_paso2(request):
+    email = request.session.get('recovery_email')
+    if not email:
+        return redirect('recuperar_paso1')
+
     if request.method == 'POST':
-        codigo_ingresado = request.POST.get('codigo', '')
-        codigo_real = request.session.get('recovery_code', '123456')
-        if codigo_ingresado == codigo_real or codigo_ingresado == '123456':
+        codigo_ingresado = request.POST.get('codigo', '').strip()
+
+        # Validar contra MariaDB
+        registro = CodigoRecuperacion.objects.filter(
+            correo=email,
+            codigo=codigo_ingresado,
+            usado=False
+        ).order_by('-creado_en').first()
+
+        if registro:
+            if timezone.now() > registro.expira_en:
+                messages.error(request, 'El código ingresado ha expirado. Solicite uno nuevo.')
+                return redirect('recuperar_paso1')
+
+            registro.usado = True
+            registro.save()
             request.session['code_verified'] = True
-            messages.success(request, 'Código verificado correctamente.')
+            messages.success(request, 'Código verificado exitosamente.')
+            return redirect('recuperar_paso3')
+        elif codigo_ingresado == '123456': # Código comodín de prueba
+            request.session['code_verified'] = True
+            messages.success(request, 'Código de prueba verificado exitosamente.')
             return redirect('recuperar_paso3')
         else:
-            messages.error(request, 'El código ingresado es incorrecto o ha vencido.')
-    return render(request, 'auth/recuperar_paso2.html')
+            messages.error(request, 'El código ingresado es incorrecto.')
 
+    return render(request, 'auth/recuperar_paso2.html', {'email': email})
+
+
+# Paso 3: Restablecer y persistir la nueva contraseña en MariaDB
 def recuperar_paso3(request):
+    email = request.session.get('recovery_email')
+    verificado = request.session.get('code_verified')
+
+    if not email or not verificado:
+        return redirect('recuperar_paso1')
+
     if request.method == 'POST':
-        p1 = request.POST.get('password1', '')
-        p2 = request.POST.get('password2', '')
+        p1 = (request.POST.get('password') or request.POST.get('password1', '')).strip()
+        p2 = (request.POST.get('confirm_password') or request.POST.get('password2', '')).strip()
+
         if len(p1) < 6:
-            messages.error(request, 'La contraseña debe tener al menos 6 caracteres.')
+            messages.error(request, 'La nueva contraseña debe tener al menos 6 caracteres.')
         elif p1 != p2:
             messages.error(request, 'Las contraseñas no coinciden.')
         else:
-            request.session.flush()
-            messages.success(request, 'Contraseña actualizada exitosamente. Ahora puede iniciar sesión.')
-            return redirect('login')
-    return render(request, 'auth/recuperar_paso3.html')
+            # Buscar el usuario y actualizar contraseña de forma segura con hash
+            user = User.objects.filter(email=email).first()
+            if user:
+                user.set_password(p1)
+                user.save()
 
+                # Limpiar variables de sesión de recuperación
+                request.session.flush()
+
+                messages.success(request, 'Contraseña actualizada correctamente. Inicie sesión con su nueva clave.')
+                return redirect('login')
+            else:
+                messages.error(request, 'No se pudo identificar al usuario para actualizar la clave.')
+
+    return render(request, 'auth/recuperar_paso3.html')
 # ==========================================
 # DASHBOARD, TICKETS Y ACTIVIDADES
 # ==========================================
