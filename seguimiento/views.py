@@ -3,6 +3,7 @@ import time
 import uuid
 import random
 import re
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
@@ -90,35 +91,69 @@ def logout_view(request):
 
 # Paso 1: Solicitar correo y generar OTP de 6 dígitos en MariaDB
 def recuperar_paso1(request):
-    # Dentro de recuperar_paso1(request), cuando encuentras al usuario y generas el código OTP:
-    asunto = "Código de Recuperación - SGR Municipalidad de La Serena"
-    mensaje = f"""Estimado/a funcionario/a:
+    if request.method == 'POST':
+        email = (request.POST.get('email') or request.POST.get('correo', '')).strip()
+        
+        # Validar si existe un usuario con ese correo o username
+        user = User.objects.filter(email=email).first() or User.objects.filter(username=email).first()
 
-    Se ha solicitado la recuperación de su contraseña en el Sistema de Gestión de Resultados (SGR).
+        if user:
+            # 1. Generar código OTP numérico de 6 dígitos
+            codigo_otp = f"{random.randint(100000, 999999)}"
+            expiracion = timezone.now() + timedelta(minutes=15)
 
-    Su código de verificación OTP es: {codigo_otp}
+            # 2. Invalidar códigos anteriores no utilizados
+            CodigoRecuperacion.objects.filter(correo=user.email, usado=False).update(usado=True)
 
-    Este código tiene una vigencia de 15 minutos. Si usted no realizó esta solicitud, desestime este mensaje.
+            # 3. Guardar en MariaDB
+            CodigoRecuperacion.objects.create(
+                correo=user.email,
+                codigo=codigo_otp,
+                expira_en=expiracion
+            )
 
-    Atentamente,
-    Ilustre Municipalidad de La Serena
-    """
+            # 4. Guardar variables en sesión para los pasos siguientes
+            request.session['recovery_code'] = codigo_otp
+            request.session['recovery_email'] = user.email
 
-    try:
-        send_mail(
-            subject=asunto,
-            message=mensaje,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=False,
-        )
-        messages.success(request, f'Código de verificación enviado a {user.email}.')
-    except Exception as e:
-        print(f"Error enviando correo: {e}")
-        # Por si las dudas en la demo, mostramos el código si el puerto o la red fallaran:
-        messages.warning(request, f'No se pudo conectar al servidor de correos. Código demo: {codigo_otp}')
+            # 5. Log de consola en la terminal de la EC2 para demo / QA
+            print(f"\n========================================================")
+            print(f" [SGR LA SERENA] CÓDIGO OTP PARA {user.email}: {codigo_otp}")
+            print(f"========================================================\n")
 
-    return redirect('auth/recuperar_paso2.html')
+            # 6. Enviar correo SMTP institucional (solo se ejecuta tras el POST)
+            asunto = "Código de Recuperación - SGR Municipalidad de La Serena"
+            mensaje = f"""Estimado/a funcionario/a:
+
+Se ha solicitado la recuperación de su contraseña en el Sistema de Gestión de Resultados (SGR).
+
+Su código de verificación OTP es: {codigo_otp}
+
+Este código tiene una vigencia de 15 minutos. Si usted no realizó esta solicitud, desestime este mensaje.
+
+Atentamente,
+Ilustre Municipalidad de La Serena
+"""
+            try:
+                send_mail(
+                    subject=asunto,
+                    message=mensaje,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[user.email],
+                    fail_silently=False,
+                )
+                messages.success(request, f'Código de verificación enviado a {user.email}.')
+            except Exception as e:
+                print(f"Error al conectar con servidor SMTP: {e}")
+                # Respaldo visual en SweetAlert2 si el puerto o credenciales SMTP fallan en la demo
+                messages.warning(request, f'No se pudo conectar al servidor de correos. Código demo QA: {codigo_otp}')
+
+            return redirect('recuperar_paso2')
+        else:
+            messages.error(request, 'El correo ingresado no se encuentra registrado en el sistema municipal.')
+
+    # Esta línea se ejecuta cuando la petición es GET (al cargar la vista en el navegador)
+    return render(request, 'auth/recuperar_paso1.html')
 
 
 # Paso 2: Validación del código OTP ingresado
