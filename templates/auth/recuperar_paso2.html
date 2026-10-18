@@ -6,7 +6,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
         .bg-muni { background-color: #AD0000; }
         .btn-muni { background-color: #AD0000; color: #fff; }
         .btn-muni:hover { background-color: #8c0000; color: #fff; }
@@ -20,11 +20,11 @@
             <small class="text-white-50">Paso 2 de 3: Validación OTP</small>
         </div>
         <div class="card-body p-4 text-center">
-            <p class="text-muted small">Ingrese el código de 6 dígitos enviado para <strong>{{ email }}</strong>:</p>
-            <form method="post">
+            <p class="text-muted small">Ingrese el código de 6 dígitos emitido para <strong>{{ email }}</strong>:</p>
+            <form method="post" id="formOTP" novalidate>
                 {% csrf_token %}
                 <div class="mb-4">
-                    <input type="text" name="codigo" maxlength="6" class="form-control otp-input" placeholder="••••••" required autofocus>
+                    <input type="text" id="codigo" name="codigo" maxlength="6" class="form-control otp-input" placeholder="000000" required autofocus>
                 </div>
                 <div class="d-flex gap-2">
                     <a href="{% url 'recuperar_paso1' %}" class="btn btn-light border w-50">Reintentar</a>
@@ -33,28 +33,44 @@
             </form>
         </div>
     </div>
-<!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     {% if messages %}
-        <div id="auth-messages" style="display: none;">
+        <div id="django-messages" style="display: none;">
             {% for m in messages %}
                 <span data-tag="{% if 'success' in m.tags %}success{% elif 'error' in m.tags %}error{% else %}warning{% endif %}" data-text="{{ m|escapejs }}"></span>
             {% endfor %}
         </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var items = document.querySelectorAll('#auth-messages span');
-                items.forEach(function (el) {
-                    Swal.fire({
-                        icon: el.getAttribute('data-tag'),
-                        title: 'Autenticación',
-                        text: el.getAttribute('data-text'),
-                        confirmButtonColor: '#AD0000'
-                    });
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var serverMsgs = document.querySelectorAll('#django-messages span');
+            serverMsgs.forEach(function (el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Verificación OTP',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
                 });
             });
-        </script>
-    {% endif %}
+
+            var form = document.getElementById('formOTP');
+            var inputCodigo = document.getElementById('codigo');
+
+            form.addEventListener('submit', function (e) {
+                var cod = inputCodigo.value.trim();
+                if (cod.length !== 6 || isNaN(cod)) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Código inválido',
+                        text: 'El código debe contener exactamente 6 dígitos numéricos.',
+                        confirmButtonColor: '#AD0000'
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>

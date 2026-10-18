@@ -22,15 +22,15 @@
             <small class="text-white-50">Sistema de Gestión de Resultados</small>
         </div>
         <div class="card-body p-4">
-            <form method="post">
+            <form method="post" id="formLogin" novalidate>
                 {% csrf_token %}
                 <div class="mb-3">
                     <label class="form-label text-secondary small fw-bold">Usuario o RUT</label>
-                    <input type="text" name="username" class="form-control" placeholder="Ej: admin o 19.876.543-2" required autofocus>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Ej: admin o 19.876.543-2" required autofocus>
                 </div>
                 <div class="mb-3">
                     <label class="form-label text-secondary small fw-bold">Contraseña</label>
-                    <input type="password" name="password" class="form-control" placeholder="••••••••" required>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
                 </div>
                 <div class="d-flex justify-content-end mb-3">
                     <a href="{% url 'recuperar_paso1' %}" class="small text-decoration-none" style="color: #AD0000;">¿Olvidó su contraseña?</a>
@@ -40,28 +40,46 @@
         </div>
     </div>
 
-<!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
+    <!-- Contenedor seguro para mensajes Django -->
     {% if messages %}
-        <div id="auth-messages" style="display: none;">
+        <div id="django-messages" style="display: none;">
             {% for m in messages %}
                 <span data-tag="{% if 'success' in m.tags %}success{% elif 'error' in m.tags %}error{% else %}warning{% endif %}" data-text="{{ m|escapejs }}"></span>
             {% endfor %}
         </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var items = document.querySelectorAll('#auth-messages span');
-                items.forEach(function (el) {
-                    Swal.fire({
-                        icon: el.getAttribute('data-tag'),
-                        title: 'Autenticación',
-                        text: el.getAttribute('data-text'),
-                        confirmButtonColor: '#AD0000'
-                    });
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mostrar mensajes devueltos por Django (ej: credenciales erróneas)
+            var serverMsgs = document.querySelectorAll('#django-messages span');
+            serverMsgs.forEach(function (el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Autenticación',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
                 });
             });
-        </script>
-    {% endif %}
+
+            // Validador cliente antes de enviar
+            var form = document.getElementById('formLogin');
+            var user = document.getElementById('username');
+            var pass = document.getElementById('password');
+
+            form.addEventListener('submit', function (e) {
+                if (!user.value.trim() || !pass.value.trim()) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Datos requeridos',
+                        text: 'Por favor complete tanto su usuario/RUT como su contraseña.',
+                        confirmButtonColor: '#AD0000'
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>

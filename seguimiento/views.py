@@ -2,7 +2,9 @@ import csv
 import time
 import uuid
 import random
+import re
 from django.contrib.auth.models import User
+from django.contrib.auth.decorators import login_required
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
@@ -29,6 +31,27 @@ def exportar_excel(nombre_archivo, encabezados, filas):
     for fila in filas:
         writer.writerow(fila)
     return response
+
+def validar_clave_segura(clave):
+    """
+    Valida política institucional de contraseñas:
+    - Mínimo 8 caracteres
+    - Al menos una letra mayúscula
+    - Al menos una letra minúscula
+    - Al menos un número
+    - Al menos un carácter especial (@$!%*?&#._-)
+    """
+    if len(clave) < 8:
+        return False, "La contraseña debe tener al menos 8 caracteres."
+    if not re.search(r'[A-Z]', clave):
+        return False, "La contraseña debe incluir al menos una letra mayúscula."
+    if not re.search(r'[a-z]', clave):
+        return False, "La contraseña debe incluir al menos una letra minúscula."
+    if not re.search(r'\d', clave):
+        return False, "La contraseña debe incluir al menos un número."
+    if not re.search(r'[@$!%*?&#._\-]', clave):
+        return False, "La contraseña debe contener al menos un carácter especial (@$!%*?&#._-)."
+    return True, ""
 
 # ==========================================
 # ACCESO Y RECUPERACIÓN DE CONTRASEÑA
@@ -143,32 +166,34 @@ def recuperar_paso3(request):
         return redirect('recuperar_paso1')
 
     if request.method == 'POST':
-        p1 = (request.POST.get('password') or request.POST.get('password1', '')).strip()
-        p2 = (request.POST.get('confirm_password') or request.POST.get('password2', '')).strip()
+        p1 = request.POST.get('password1', '').strip()
+        p2 = request.POST.get('password2', '').strip()
 
-        if len(p1) < 6:
-            messages.error(request, 'La nueva contraseña debe tener al menos 6 caracteres.')
-        elif p1 != p2:
+        if p1 != p2:
             messages.error(request, 'Las contraseñas no coinciden.')
         else:
-            # Buscar el usuario y actualizar contraseña de forma segura con hash
-            user = User.objects.filter(email=email).first()
-            if user:
-                user.set_password(p1)
-                user.save()
-
-                # Limpiar variables de sesión de recuperación
-                request.session.flush()
-
-                messages.success(request, 'Contraseña actualizada correctamente. Inicie sesión con su nueva clave.')
-                return redirect('login')
+            es_valida, mensaje_error = validar_clave_segura(p1)
+            if not es_valida:
+                messages.error(request, mensaje_error)
             else:
-                messages.error(request, 'No se pudo identificar al usuario para actualizar la clave.')
+                user = User.objects.filter(email=email).first()
+                if user:
+                    user.set_password(p1)
+                    user.save()
+
+                    # Limpiar sesión de recuperación
+                    request.session.flush()
+
+                    messages.success(request, 'Contraseña actualizada exitosamente. Inicie sesión con su nueva clave.')
+                    return redirect('login')
+                else:
+                    messages.error(request, 'No se encontró el usuario asociado para actualizar la clave.')
 
     return render(request, 'auth/recuperar_paso3.html')
 # ==========================================
 # DASHBOARD, TICKETS Y ACTIVIDADES
 # ==========================================
+@login_required
 def dashboard_delegaciones(request):
     context = {
         'total_tickets': CompromisoTicket.objects.count(),
@@ -178,10 +203,12 @@ def dashboard_delegaciones(request):
     }
     return render(request, 'seguimientoWeb/dashboard.html', context)
 
+@login_required
 def listado_tickets(request):
     tickets = CompromisoTicket.objects.select_related('delegacion', 'funcionario_asignado').all()
     return render(request, 'seguimientoWeb/listado_tickets.html', {'tickets': tickets})
 
+@login_required
 def listado_actividades(request):
     q = request.GET.get('q', '')
     actividades = Actividad.objects.select_related('funcionario', 'delegacion').all()
@@ -194,6 +221,7 @@ def listado_actividades(request):
         return exportar_excel('atenciones_sgr', ['Código', 'Funcionario', 'Delegación', 'Descripción', 'Estado'], filas)
     return render(request, 'seguimientoWeb/listado_actividades.html', {'actividades': actividades, 'query': q})
 
+@login_required
 def crear_actividad(request):
     if request.method == 'POST':
         form = ActividadForm(request.POST)
@@ -232,6 +260,7 @@ def crear_actividad(request):
 # ==========================================
 # 1. CRUD DELEGACIONES
 # ==========================================
+@login_required
 def listado_delegaciones(request):
     q = request.GET.get('q', '')
     items = Delegacion.objects.all()
@@ -248,6 +277,7 @@ def listado_delegaciones(request):
         'query': q
     })
 
+@login_required
 def agregar_delegacion(request):
     form = DelegacionForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -256,6 +286,7 @@ def agregar_delegacion(request):
         return redirect('listado_delegaciones')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nueva Delegación'})
 
+@login_required
 def editar_delegacion(request, id):
     obj = get_object_or_404(Delegacion, pk=id)
     form = DelegacionForm(request.POST or None, instance=obj)
@@ -265,6 +296,7 @@ def editar_delegacion(request, id):
         return redirect('listado_delegaciones')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Delegación: {obj.nombre}'})
 
+@login_required
 def eliminar_delegacion(request, id):
     obj = get_object_or_404(Delegacion, pk=id)
     obj.estado = False
@@ -275,6 +307,7 @@ def eliminar_delegacion(request, id):
 # ==========================================
 # 2. CRUD ROLES (CARGOS)
 # ==========================================
+@login_required
 def listado_roles(request):
     q = request.GET.get('q', '')
     items = Cargo.objects.all()
@@ -291,6 +324,7 @@ def listado_roles(request):
         'query': q
     })
 
+@login_required
 def agregar_rol(request):
     form = CargoForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -299,6 +333,7 @@ def agregar_rol(request):
         return redirect('listado_roles')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nuevo Rol'})
 
+@login_required
 def editar_rol(request, id):
     obj = get_object_or_404(Cargo, pk=id)
     form = CargoForm(request.POST or None, instance=obj)
@@ -308,6 +343,7 @@ def editar_rol(request, id):
         return redirect('listado_roles')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Rol: {obj.nombre}'})
 
+@login_required
 def eliminar_rol(request, id):
     obj = get_object_or_404(Cargo, pk=id)
     obj.delete()
@@ -317,6 +353,7 @@ def eliminar_rol(request, id):
 # ==========================================
 # 3. CRUD USUARIOS (FUNCIONARIOS)
 # ==========================================
+@login_required
 def listado_funcionarios(request):
     query = request.GET.get('q', '')
     funcionarios = Funcionario.objects.select_related('delegacion', 'cargo').all()
@@ -329,6 +366,7 @@ def listado_funcionarios(request):
         return exportar_excel('usuarios_sgr', ['RUT', 'Nombre Completo', 'Rol', 'Delegación'], filas)
     return render(request, 'seguimientoWeb/listado_funcionarios.html', {'funcionarios': funcionarios, 'query': query})
 
+@login_required
 def agregar_funcionario(request):
     form = FuncionarioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -337,6 +375,7 @@ def agregar_funcionario(request):
         return redirect('listado_funcionarios')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Agregar Nuevo Usuario'})
 
+@login_required
 def editar_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, pk=id)
     form = FuncionarioForm(request.POST or None, instance=funcionario)
@@ -346,6 +385,7 @@ def editar_funcionario(request, id):
         return redirect('listado_funcionarios')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Modificar Usuario: {funcionario.nombre}'})
 
+@login_required
 def eliminar_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, pk=id)
     funcionario.delete()
@@ -355,6 +395,7 @@ def eliminar_funcionario(request, id):
 # ==========================================
 # 4. CRUD ÍTEMS Y METAS
 # ==========================================
+@login_required
 def listado_items(request):
     q = request.GET.get('q', '')
     items = ItemMeta.objects.all()
@@ -371,6 +412,7 @@ def listado_items(request):
         'query': q
     })
 
+@login_required
 def agregar_item(request):
     form = ItemMetaForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -379,6 +421,7 @@ def agregar_item(request):
         return redirect('listado_items')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nuevo Ítem y Meta'})
 
+@login_required
 def editar_item(request, id):
     obj = get_object_or_404(ItemMeta, pk=id)
     form = ItemMetaForm(request.POST or None, instance=obj)
@@ -388,6 +431,7 @@ def editar_item(request, id):
         return redirect('listado_items')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Ítem: {obj.nombre}'})
 
+@login_required
 def eliminar_item(request, id):
     obj = get_object_or_404(ItemMeta, pk=id)
     obj.estado = False
@@ -398,6 +442,7 @@ def eliminar_item(request, id):
 # ==========================================
 # 5. CRUD TIPO DE ATENCIÓN
 # ==========================================
+@login_required
 def listado_tipos_atencion(request):
     q = request.GET.get('q', '')
     items = TipoAtencion.objects.all()
@@ -414,6 +459,7 @@ def listado_tipos_atencion(request):
         'query': q
     })
 
+@login_required
 def agregar_tipo_atencion(request):
     form = TipoAtencionForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -422,6 +468,7 @@ def agregar_tipo_atencion(request):
         return redirect('listado_tipos_atencion')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nuevo Tipo de Atención'})
 
+@login_required
 def editar_tipo_atencion(request, id):
     obj = get_object_or_404(TipoAtencion, pk=id)
     form = TipoAtencionForm(request.POST or None, instance=obj)
@@ -431,6 +478,7 @@ def editar_tipo_atencion(request, id):
         return redirect('listado_tipos_atencion')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Tipo: {obj.nombre}'})
 
+@login_required
 def eliminar_tipo_atencion(request, id):
     obj = get_object_or_404(TipoAtencion, pk=id)
     obj.estado = False
@@ -441,6 +489,7 @@ def eliminar_tipo_atencion(request, id):
 # ==========================================
 # 6. CRUD SUB ATENCIÓN
 # ==========================================
+@login_required
 def listado_sub_atenciones(request):
     q = request.GET.get('q', '')
     items = SubAtencion.objects.select_related('tipo_atencion').all()
@@ -457,6 +506,7 @@ def listado_sub_atenciones(request):
         'query': q
     })
 
+@login_required
 def agregar_sub_atencion(request):
     form = SubAtencionForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
@@ -465,6 +515,7 @@ def agregar_sub_atencion(request):
         return redirect('listado_sub_atenciones')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nueva Sub Atención'})
 
+@login_required
 def editar_sub_atencion(request, id):
     obj = get_object_or_404(SubAtencion, pk=id)
     form = SubAtencionForm(request.POST or None, instance=obj)
@@ -474,6 +525,7 @@ def editar_sub_atencion(request, id):
         return redirect('listado_sub_atenciones')
     return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Sub Atención: {obj.nombre}'})
 
+@login_required
 def eliminar_sub_atencion(request, id):
     obj = get_object_or_404(SubAtencion, pk=id)
     obj.estado = False
@@ -481,6 +533,7 @@ def eliminar_sub_atencion(request, id):
     messages.warning(request, f'La Sub Atención {obj.nombre} fue desactivada.')
     return redirect('listado_sub_atenciones')
 
+@login_required
 def api_subatenciones(request, tipo_id):
     """Devuelve las subatenciones asociadas a un Tipo de Atención en formato JSON."""
     subatenciones = SubAtencion.objects.filter(tipo_atencion_id=tipo_id, estado=True).values('id', 'codigo', 'nombre')

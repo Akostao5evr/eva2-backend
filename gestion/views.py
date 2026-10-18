@@ -3,6 +3,7 @@ from .models import Funcionario
 from .forms import FuncionarioForm
 
 # 1. READ (Listar y Buscar)
+@login_required
 def listar_funcionarios(request):
     query = request.GET.get('q', '')
     if query:
@@ -16,6 +17,7 @@ def listar_funcionarios(request):
     })
 
 # 2. CREATE (Agregar)
+@login_required
 def agregar_funcionario(request):
     if request.method == 'POST':
         form = FuncionarioForm(request.POST)
@@ -31,6 +33,7 @@ def agregar_funcionario(request):
     })
 
 # 3. UPDATE (Modificar)
+@login_required
 def editar_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, pk=id)
     if request.method == 'POST':
@@ -47,6 +50,7 @@ def editar_funcionario(request, id):
     })
 
 # 4. DELETE (Eliminar)
+@login_required
 def eliminar_funcionario(request, id):
     funcionario = get_object_or_404(Funcionario, pk=id)
     if request.method == 'POST':

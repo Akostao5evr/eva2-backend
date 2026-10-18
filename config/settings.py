@@ -131,3 +131,8 @@ MAILERS = {
         'DEFAULT_FROM_EMAIL': os.getenv('DEFAULT_FROM_EMAIL', 'SGR Municipalidad de La Serena <no-reply@laserena.cl>')
     },
 }
+
+# config/settings.py (al final del archivo)
+LOGIN_URL = 'login'
+LOGIN_REDIRECT_URL = 'dashboard_delegaciones'
+LOGOUT_REDIRECT_URL = 'login'

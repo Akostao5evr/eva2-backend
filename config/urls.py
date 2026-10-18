@@ -18,6 +18,10 @@ from django.contrib import admin
 from django.urls import path, include
 
 urlpatterns = [
+# Redirige la raíz http://IP:8000/ directo a /seguimientoWeb/login/
+    path('', lambda request: redirect('login'), name='raiz'),
+
     path('admin/', admin.site.urls),
-    path('seguimientoWeb/', include('seguimiento.urls'))
+    path('gestion/', include('gestion.urls')),
+    path('seguimientoWeb/', include('seguimiento.urls')),
 ]

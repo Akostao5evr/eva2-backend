@@ -4,57 +4,132 @@
     <meta charset="UTF-8">
     <title>Nueva Contraseña - SGR</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <style>
-        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; }
+        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
         .bg-muni { background-color: #AD0000; }
         .btn-muni { background-color: #AD0000; color: #fff; }
         .btn-muni:hover { background-color: #8c0000; color: #fff; }
+        .req-list { font-size: 0.78rem; list-style: none; padding-left: 0; }
+        .req-list li { margin-bottom: 2px; }
     </style>
 </head>
 <body>
-    <div class="card shadow border-0" style="max-width: 440px; width: 100%;">
+    <div class="card shadow border-0" style="max-width: 460px; width: 100%;">
         <div class="card-header bg-muni text-white text-center py-3">
             <h5 class="fw-bold mb-0">Restablecer Contraseña</h5>
-            <small class="text-white-50">Paso 3 de 3: Finalización</small>
+            <small class="text-white-50">Paso 3 de 3: Seguridad de la cuenta</small>
         </div>
         <div class="card-body p-4">
-            <form method="post">
+            <form method="post" id="formNuevaClave" novalidate>
                 {% csrf_token %}
                 <div class="mb-3">
-                    <label class="form-label text-secondary small fw-bold">Nueva Contraseña (mínimo 6 caracteres)</label>
-                    <input type="password" name="password1" class="form-control" placeholder="••••••••" required autofocus>
+                    <label class="form-label text-secondary small fw-bold">Nueva Contraseña *</label>
+                    <input type="password" id="pass1" name="password1" class="form-control" placeholder="••••••••" required autofocus>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label text-secondary small fw-bold">Confirmar Nueva Contraseña</label>
-                    <input type="password" name="password2" class="form-control" placeholder="••••••••" required>
+                    <label class="form-label text-secondary small fw-bold">Confirmar Nueva Contraseña *</label>
+                    <input type="password" id="pass2" name="password2" class="form-control" placeholder="••••••••" required>
                 </div>
-                <button type="submit" class="btn btn-muni w-100 py-2 fw-bold">Actualizar Contraseña</button>
+
+                <!-- Guía visual de requisitos -->
+                <div class="card bg-light border-0 p-3 mb-3">
+                    <div class="text-muted fw-bold mb-1" style="font-size: 0.8rem;">Requisitos de seguridad:</div>
+                    <ul class="req-list text-secondary m-0">
+                        <li><i class="bi bi-dot text-danger"></i> Mínimo 8 caracteres de longitud</li>
+                        <li><i class="bi bi-dot text-danger"></i> Al menos una letra mayúscula y una minúscula</li>
+                        <li><i class="bi bi-dot text-danger"></i> Al menos un número (0-9)</li>
+                        <li><i class="bi bi-dot text-danger"></i> Al menos un carácter especial (@, $, !, %, *, ?, &, #, ., -, _)</li>
+                    </ul>
+                </div>
+
+                <button type="submit" class="btn btn-muni w-100 py-2 fw-bold">Guardar Contraseña</button>
             </form>
         </div>
     </div>
-<!-- SweetAlert2 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+    <!-- Contenedor seguro para mensajes Django -->
     {% if messages %}
-        <div id="auth-messages" style="display: none;">
+        <div id="django-messages" style="display: none;">
             {% for m in messages %}
                 <span data-tag="{% if 'success' in m.tags %}success{% elif 'error' in m.tags %}error{% else %}warning{% endif %}" data-text="{{ m|escapejs }}"></span>
             {% endfor %}
         </div>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                var items = document.querySelectorAll('#auth-messages span');
-                items.forEach(function (el) {
-                    Swal.fire({
-                        icon: el.getAttribute('data-tag'),
-                        title: 'Autenticación',
-                        text: el.getAttribute('data-text'),
-                        confirmButtonColor: '#AD0000'
-                    });
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mostrar mensajes que vengan del servidor
+            var serverMsgs = document.querySelectorAll('#django-messages span');
+            serverMsgs.forEach(function (el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Seguridad SGR',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
                 });
             });
-        </script>
-    {% endif %}
+
+            // Validador en tiempo de envío con SweetAlert2
+            var form = document.getElementById('formNuevaClave');
+            var pass1 = document.getElementById('pass1');
+            var pass2 = document.getElementById('pass2');
+
+            form.addEventListener('submit', function (e) {
+                e.preventDefault();
+
+                var val1 = pass1.value;
+                var val2 = pass2.value;
+
+                if (!val1 || !val2) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Campos incompletos',
+                        text: 'Por favor complete ambos campos de contraseña.',
+                        confirmButtonColor: '#AD0000'
+                    });
+                    return;
+                }
+
+                if (val1 !== val2) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'No coinciden',
+                        text: 'Las contraseñas ingresadas no son iguales.',
+                        confirmButtonColor: '#AD0000'
+                    });
+                    return;
+                }
+
+                // Expresiones regulares de validación
+                var tieneLongitud = val1.length >= 8;
+                var tieneMayuscula = /[A-Z]/.test(val1);
+                var tieneMinuscula = /[a-z]/.test(val1);
+                var tieneNumero = /\d/.test(val1);
+                var tieneEspecial = /[@$!%*?&#._\-]/.test(val1);
+
+                if (!tieneLongitud || !tieneMayuscula || !tieneMinuscula || !tieneNumero || !tieneEspecial) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Contraseña poco segura',
+                        html: '<div class="text-start small">' +
+                              '<p class="mb-2">Su contraseña debe cumplir con todos los siguientes puntos:</p>' +
+                              '• Mínimo 8 caracteres<br>' +
+                              '• Letra mayúscula y minúscula<br>' +
+                              '• Al menos un número<br>' +
+                              '• Carácter especial (@, $, !, %, *, ?, &, #, ., -, _)' +
+                              '</div>',
+                        confirmButtonColor: '#AD0000'
+                    });
+                    return;
+                }
+
+                // Si cumple todo, enviamos el formulario
+                form.submit();
+            });
+        });
+    </script>
 </body>
 </html>
