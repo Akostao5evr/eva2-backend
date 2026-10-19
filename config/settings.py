@@ -132,7 +132,16 @@ MAILERS = {
     },
 }
 
-# config/settings.py (al final del archivo)
+# Conexión directa a variables globales de Django
+EMAIL_BACKEND = MAILERS['default']['BACKEND']
+EMAIL_HOST = MAILERS['default']['EMAIL_HOST']
+EMAIL_PORT = MAILERS['default']['EMAIL_PORT']
+EMAIL_USE_TLS = MAILERS['default']['EMAIL_USE_TLS']
+EMAIL_HOST_USER = MAILERS['default']['EMAIL_HOST_USER']
+EMAIL_HOST_PASSWORD = MAILERS['default']['EMAIL_HOST_PASSWORD']
+DEFAULT_FROM_EMAIL = MAILERS['default']['DEFAULT_FROM_EMAIL']
+
+# Siempre vaya al login si no está autenticado
 LOGIN_URL = 'login'
 LOGIN_REDIRECT_URL = 'dashboard_delegaciones'
 LOGOUT_REDIRECT_URL = 'login'
