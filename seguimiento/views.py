@@ -258,40 +258,51 @@ def listado_actividades(request):
 
 @login_required
 def crear_actividad(request):
+    codigo_generado = None
+
     if request.method == 'POST':
         form = ActividadForm(request.POST)
         if form.is_valid():
             actividad = form.save(commit=False)
             
-            # Asignar solicitante
-            actividad.solicitante = request.POST.get('solicitante', 'Vecino no especificado')
-            
-            # Asignar Tipo y Subatención
-            tipo_id = request.POST.get('tipo_atencion')
-            sub_id = request.POST.get('sub_atencion')
-            if tipo_id:
-                actividad.tipo_atencion_id = tipo_id
-            if sub_id:
-                actividad.sub_atencion_id = sub_id
-            
-            # Generar código verificador correlativo único ACT-XXXXXXXX
+            # Generar código inmutable correlativo ACT-XXXXXXXX
             timestamp_part = str(int(time.time()))[-5:]
             random_part = f"{random.randint(100, 999)}"
             actividad.codigo_verificador = f"ACT-{timestamp_part}{random_part}"
             
+            # Respaldo de integridad por si falta delegación o funcionario
+            if not actividad.delegacion_id:
+                primera_del = Delegacion.objects.filter(estado=True).first()
+                if primera_del:
+                    actividad.delegacion = primera_del
+
+            if not actividad.funcionario_id:
+                primer_func = Funcionario.objects.filter(estado=True).first()
+                if primer_func:
+                    actividad.funcionario = primer_func
+
+            if hasattr(actividad, 'estado') and not actividad.estado:
+                actividad.estado = 'Pendiente'
+
             actividad.save()
-            messages.success(request, f"¡Atención registrada correctamente! Código: {actividad.codigo_verificador}")
-            return redirect('listado_actividades')
+            
+            # Pauta C6: Se retorna la vista con el código generado para el SweetAlert2
+            return render(request, 'seguimientoWeb/crear_actividad.html', {
+                'form': ActividadForm(),  # Formulario limpio para permitir "Iniciar nueva atención"
+                'tipos_atencion': TipoAtencion.objects.filter(estado=True),
+                'codigo_generado': actividad.codigo_verificador
+            })
         else:
-            messages.error(request, "Ocurrió un error al validar los datos del formulario.")
+            messages.error(request, 'Por favor revise los campos del formulario. Todos los marcados con asterisco (*) son obligatorios.')
     else:
         form = ActividadForm()
 
     tipos_atencion = TipoAtencion.objects.filter(estado=True).prefetch_related('subatenciones')
     return render(request, 'seguimientoWeb/crear_actividad.html', {
         'form': form,
-        'tipos_atencion': tipos_atencion
-    })  
+        'tipos_atencion': tipos_atencion,
+        'codigo_generado': codigo_generado
+    })
 # ==========================================
 # 1. CRUD DELEGACIONES
 # ==========================================

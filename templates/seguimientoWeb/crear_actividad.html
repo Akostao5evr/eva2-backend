@@ -9,10 +9,24 @@
 <div class="card border rounded-3 p-4 shadow-sm bg-white">
     <form method="post" id="formCrearActividad">
         {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="alert alert-danger py-2 small mb-3">
+            <strong>Error al registrar atención:</strong>
+            <ul class="mb-0 mt-1">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li>{{ field.label }}: {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+            </ul>
+        </div>
+        {% endif %}
+
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="form-label text-secondary small fw-bold">Vecino o solicitante *</label>
-                <input type="text" name="solicitante" class="form-control" placeholder="Buscar por identificador o nombre..." required>
+                {{ form.solicitante }}
             </div>
             <div class="col-md-6">
                 <label class="form-label text-secondary small fw-bold">Delegación de atención *</label>
@@ -23,29 +37,18 @@
         <div class="row g-3 mb-3">
             <div class="col-md-6">
                 <label class="form-label text-secondary small fw-bold">Tipo de Atención *</label>
-                <select name="tipo_atencion" id="selectTipo" class="form-select" onchange="actualizarSubAtenciones()" required>
-                    <option value="">Seleccione tipo...</option>
-                    {% for tipo in tipos_atencion %}
-                        <option value="{{ tipo.id }}">{{ tipo.nombre }}</option>
-                    {% endfor %}
-                </select>
+                {{ form.tipo_atencion }}
             </div>
             <div class="col-md-6">
                 <label class="form-label text-secondary small fw-bold">Sub Atención *</label>
-                <select name="sub_atencion" id="selectSub" class="form-select" required>
-                    <option value="">Seleccione primero un Tipo de Atención...</option>
-                </select>
+                {{ form.sub_atencion }}
             </div>
         </div>
 
         <div class="row g-3 mb-3">
-            <div class="col-md-6">
+            <div class="col-md-12">
                 <label class="form-label text-secondary small fw-bold">Funcionario responsable *</label>
                 {{ form.funcionario }}
-            </div>
-            <div class="col-md-6">
-                <label class="form-label text-secondary small fw-bold">Estado de validación</label>
-                {{ form.estado }}
             </div>
         </div>
 
@@ -54,20 +57,22 @@
             {{ form.descripcion }}
         </div>
 
-        <div class="d-flex justify-content-between align-items-center pt-2">
+        <div class="d-flex justify-content-between align-items-center pt-3 border-top">
             <div class="text-muted small">
-                Responsable: usuario de sesión &nbsp;|&nbsp; Fecha y hora: automáticas
+                Responsable: {{ request.user.username }} &nbsp;|&nbsp; Fecha y hora: automáticas
             </div>
             <div class="d-flex gap-2">
                 <a href="{% url 'listado_actividades' %}" class="btn btn-light border px-4">Cancelar</a>
-                <button type="submit" id="btnSubmit" class="btn text-white px-4" style="background-color: #AD0000;">Guardar atención</button>
+                <button type="submit" id="btnSubmit" class="btn text-white px-4 fw-semibold" style="background-color: #AD0000;">
+                    Guardar atención
+                </button>
             </div>
         </div>
     </form>
 </div>
 
-<<script>
-    function actualizarSubAtenciones() {
+<script>
+    function cargarSubAtenciones() {
         const selectTipo = document.getElementById('selectTipo');
         const selectSub = document.getElementById('selectSub');
         const tipoId = selectTipo.value;
@@ -81,20 +86,19 @@
             return;
         }
 
-        // Consulta dinámica al endpoint JSON sin mezclar etiquetas Django en JS
-        fetch('/seguimientoWeb/api/subatenciones/' + tipoId + '/')
-            .then(function(response) {
-                return response.json();
-            })
+        const urlApi = "{% url 'api_subatenciones' tipo_id=999999 %}".replace('999999', tipoId);
+
+        fetch(urlApi)
+            .then(function(res) { return res.json(); })
             .then(function(data) {
                 selectSub.innerHTML = '<option value="">Seleccione sub atención...</option>';
                 if (data.length === 0) {
-                    selectSub.innerHTML = '<option value="">(No hay sub atenciones registradas)</option>';
+                    selectSub.innerHTML = '<option value="">(No hay sub atenciones activas)</option>';
                 } else {
                     data.forEach(function(item) {
                         const opt = document.createElement('option');
                         opt.value = item.id;
-                        opt.textContent = item.nombre;
+                        opt.textContent = (item.codigo ? item.codigo + ' - ' : '') + item.nombre;
                         selectSub.appendChild(opt);
                     });
                 }
@@ -108,37 +112,44 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
-        const selects = document.querySelectorAll('#formCrearActividad select');
-        selects.forEach(function(s) { s.classList.add('form-select'); });
+        const selectTipo = document.getElementById('selectTipo');
+        if (selectTipo) {
+            selectTipo.addEventListener('change', cargarSubAtenciones);
+        }
 
-        const textareas = document.querySelectorAll('#formCrearActividad textarea');
-        textareas.forEach(function(t) {
-            t.classList.add('form-control');
-            t.rows = 3;
-            t.placeholder = 'Describa la solicitud y los antecedentes necesarios.';
-        });
-
+        // Pauta C6: Evitar registros duplicados por doble envío
         const form = document.getElementById('formCrearActividad');
-        form.addEventListener('submit', function(e) {
-            if (!form.checkValidity()) {
-                return;
-            }
-            e.preventDefault();
-            Swal.fire({
-                title: '¿Confirmar registro?',
-                text: "Se generará un comprobante correlativo para esta atención.",
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#AD0000',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Sí, guardar',
-                cancelButtonText: 'Revisar'
-            }).then(function(result) {
-                if (result.isConfirmed) {
-                    form.submit();
-                }
+        const btnSubmit = document.getElementById('btnSubmit');
+        if (form && btnSubmit) {
+            form.addEventListener('submit', function() {
+                btnSubmit.disabled = true;
+                btnSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Guardando...';
             });
+        }
+    });
+</script>
+
+{% if codigo_generado %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        Swal.fire({
+            title: '¡Atención registrada!',
+            html: 'Se ha generado correctamente el comprobante inmutable:<br><b class="fs-4 text-danger mt-2 d-inline-block">{{ codigo_generado }}</b>',
+            icon: 'success',
+            showCancelButton: true,
+            confirmButtonColor: '#AD0000',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Consultar registrada',
+            cancelButtonText: 'Iniciar nueva atención',
+            allowOutsideClick: false
+        }).then(function(result) {
+            if (result.isConfirmed) {
+                window.location.href = "{% url 'listado_actividades' %}";
+            } else {
+                window.location.href = "{% url 'crear_actividad' %}";
+            }
         });
     });
 </script>
+{% endif %}
 {% endblock %}

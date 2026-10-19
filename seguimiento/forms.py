@@ -1,6 +1,12 @@
 from django import forms
 from gestion.models import Funcionario, Delegacion, Cargo, ItemMeta
-from .models import Actividad, TipoAtencion, SubAtencion
+from .models import Actividad, TipoAtencion, SubAtencion, Delegacion
+
+# Si tu modelo se llama Actividad o Atencion, usa el que corresponda:
+try:
+    from .models import Actividad as ModeloAtencion
+except ImportError:
+    from .models import Atencion as ModeloAtencion
 
 class FuncionarioForm(forms.ModelForm):
     class Meta:
@@ -37,28 +43,29 @@ class ActividadForm(forms.ModelForm):
         model = Actividad
         fields = ['solicitante', 'delegacion', 'funcionario', 'tipo_atencion', 'sub_atencion', 'descripcion']
         widgets = {
-            'solicitante': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: Juan Pérez Morales', 'required': 'required'}),
+            'solicitante': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Buscar por identificador o nombre...', 'required': 'required'}),
             'delegacion': forms.Select(attrs={'class': 'form-select', 'required': 'required'}),
             'funcionario': forms.Select(attrs={'class': 'form-select', 'required': 'required'}),
-            'tipo_atencion': forms.Select(attrs={'class': 'form-select', 'id': 'select-tipo', 'required': 'required'}),
-            'sub_atencion': forms.Select(attrs={'class': 'form-select', 'id': 'select-subatencion', 'required': 'required'}),
-            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Detalle de la solicitud o atención ciudadana...', 'required': 'required'}),
+            'tipo_atencion': forms.Select(attrs={'class': 'form-select', 'id': 'selectTipo', 'required': 'required'}),
+            'sub_atencion': forms.Select(attrs={'class': 'form-select', 'id': 'selectSub', 'required': 'required'}),
+            'descripcion': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Describa la solicitud y los antecedentes necesarios.', 'required': 'required'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # Mostrar solo registros activos
         self.fields['tipo_atencion'].queryset = TipoAtencion.objects.filter(estado=True)
         self.fields['delegacion'].queryset = Delegacion.objects.filter(estado=True)
         self.fields['funcionario'].queryset = Funcionario.objects.filter(estado=True)
-        # Inicialmente vacío o filtrado si viene en POST
-        if 'tipo_atencion' in self.data:
-            try:
-                tipo_id = int(self.data.get('tipo_atencion'))
-                self.fields['sub_atencion'].queryset = SubAtencion.objects.filter(tipo_atencion_id=tipo_id, estado=True)
-            except (ValueError, TypeError):
-                self.fields['sub_atencion'].queryset = SubAtencion.objects.none()
-        elif self.instance.pk and self.instance.tipo_atencion:
-            self.fields['sub_atencion'].queryset = self.instance.tipo_atencion.subatenciones.filter(estado=True)
-        else:
-            self.fields['sub_atencion'].queryset = SubAtencion.objects.none()
+        # Permite validar cualquier subatención activa enviada dinámicamente
+        self.fields['sub_atencion'].queryset = SubAtencion.objects.filter(estado=True)
+        self.fields['tipo_atencion'].empty_label = "Seleccione Tipo de Atención..."
+        self.fields['sub_atencion'].empty_label = "Seleccione Sub Atención..."
+
+    def clean(self):
+        cleaned_data = super().clean()
+        tipo = cleaned_data.get('tipo_atencion')
+        sub = cleaned_data.get('sub_atencion')
+        # Validación de integridad de catálogo en el servidor (Pauta C6)
+        if tipo and sub and sub.tipo_atencion_id != tipo.id:
+            self.add_error('sub_atencion', 'La Sub Atención seleccionada no pertenece al Tipo de Atención indicado.')
+        return cleaned_data
