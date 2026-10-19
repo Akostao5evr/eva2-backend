@@ -20,7 +20,7 @@ class CargoForm(forms.ModelForm):
 class ItemMetaForm(forms.ModelForm):
     class Meta:
         model = ItemMeta
-        fields = ['codigo', 'nombre', 'descripcion', 'estado']
+        fields = ['nombre', 'descripcion', 'estado']
 
 class TipoAtencionForm(forms.ModelForm):
     class Meta:
