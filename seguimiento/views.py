@@ -451,10 +451,29 @@ def listado_items(request):
 def agregar_item(request):
     form = ItemMetaForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Ítem creado exitosamente.')
+        item = form.save(commit=False)
+        
+        # Generación automática de correlativo IT001, IT002...
+        if not item.codigo:
+            ultimo = ItemMeta.objects.filter(codigo__startswith='IT').order_by('-id').first()
+            if ultimo and ultimo.codigo:
+                try:
+                    num = int(ultimo.codigo.replace('IT', '')) + 1
+                except ValueError:
+                    num = ItemMeta.objects.count() + 1
+            else:
+                num = 1
+            item.codigo = f"IT{num:03d}"
+            
+        item.save()
+        messages.success(request, f'Ítem registrado con código {item.codigo}.')
         return redirect('listado_items')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nuevo Ítem y Meta'})
+        
+    return render(request, 'seguimientoWeb/form_funcionario.html', {
+        'form': form,
+        'modulo': 'Ítems y metas',
+        'titulo': 'Nuevo Ítem y Meta'
+    })
 
 @login_required
 def editar_item(request, id):
@@ -464,7 +483,11 @@ def editar_item(request, id):
         form.save()
         messages.success(request, 'Ítem actualizado exitosamente.')
         return redirect('listado_items')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Ítem: {obj.nombre}'})
+    return render(request, 'seguimientoWeb/form_funcionario.html', {
+        'form': form,
+        'modulo': 'Ítems y metas',
+        'titulo': f'Editar Ítem: {obj.nombre}'
+    })
 
 @login_required
 def eliminar_item(request, id):
@@ -473,7 +496,6 @@ def eliminar_item(request, id):
     obj.save()
     messages.warning(request, f'El ítem {obj.codigo} fue desactivado.')
     return redirect('listado_items')
-
 # ==========================================
 # 5. CRUD TIPO DE ATENCIÓN
 # ==========================================
