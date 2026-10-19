@@ -1,5 +1,5 @@
 DOCUMENTACION TECNICA DEL SISTEMA DE GESTION DE RESULTADOS (SGR)
-MUNICIPALIDAD DE LA SERENA - INACAP SEDE LA SERENA
+Esteban Heredia, Francisco Astudillo y Natanael Valdivia — Analista Programador / Ingeniería en Ciberseguridad — INACAP Sede La Serena.
 
 1.DESCRIPCION GENERAL DEL PROYECTO
 
