@@ -25,12 +25,12 @@ class ItemMetaForm(forms.ModelForm):
 class TipoAtencionForm(forms.ModelForm):
     class Meta:
         model = TipoAtencion
-        fields = ['codigo', 'nombre', 'descripcion', 'estado']
+        fields = ['nombre', 'descripcion', 'estado']
 
 class SubAtencionForm(forms.ModelForm):
     class Meta:
         model = SubAtencion
-        fields = ['codigo', 'nombre', 'tipo_atencion', 'estado']
+        fields = ['nombre', 'tipo_atencion', 'estado']
 
 class ActividadForm(forms.ModelForm):
     class Meta:

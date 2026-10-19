@@ -498,10 +498,29 @@ def listado_tipos_atencion(request):
 def agregar_tipo_atencion(request):
     form = TipoAtencionForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Tipo de Atención creado.')
+        tipo = form.save(commit=False)
+        
+        # Generación automática de correlativo TA001, TA002...
+        if not tipo.codigo:
+            ultimo = TipoAtencion.objects.filter(codigo__startswith='TA').order_by('-id').first()
+            if ultimo and ultimo.codigo:
+                try:
+                    num = int(ultimo.codigo.replace('TA', '')) + 1
+                except ValueError:
+                    num = TipoAtencion.objects.count() + 1
+            else:
+                num = 1
+            tipo.codigo = f"TA{num:03d}"
+            
+        tipo.save()
+        messages.success(request, f'Tipo de Atención creado con código {tipo.codigo}.')
         return redirect('listado_tipos_atencion')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nuevo Tipo de Atención'})
+        
+    return render(request, 'seguimientoWeb/form_funcionario.html', {
+        'form': form,
+        'modulo': 'Tipo de Atención',
+        'titulo': 'Nuevo Tipo de Atención'
+    })
 
 @login_required
 def editar_tipo_atencion(request, id):
@@ -511,7 +530,11 @@ def editar_tipo_atencion(request, id):
         form.save()
         messages.success(request, 'Tipo de Atención actualizado.')
         return redirect('listado_tipos_atencion')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Tipo: {obj.nombre}'})
+    return render(request, 'seguimientoWeb/form_funcionario.html', {
+        'form': form,
+        'modulo': 'Tipo de Atención',
+        'titulo': f'Editar Tipo: {obj.nombre}'
+    })
 
 @login_required
 def eliminar_tipo_atencion(request, id):
@@ -520,6 +543,7 @@ def eliminar_tipo_atencion(request, id):
     obj.save()
     messages.warning(request, f'El Tipo de Atención {obj.nombre} ha sido desactivado.')
     return redirect('listado_tipos_atencion')
+
 
 # ==========================================
 # 6. CRUD SUB ATENCIÓN
@@ -545,10 +569,29 @@ def listado_sub_atenciones(request):
 def agregar_sub_atencion(request):
     form = SubAtencionForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Sub Atención registrada correctamente.')
+        sub = form.save(commit=False)
+        
+        # Generación automática de correlativo SA001, SA002...
+        if not sub.codigo:
+            ultimo = SubAtencion.objects.filter(codigo__startswith='SA').order_by('-id').first()
+            if ultimo and ultimo.codigo:
+                try:
+                    num = int(ultimo.codigo.replace('SA', '')) + 1
+                except ValueError:
+                    num = SubAtencion.objects.count() + 1
+            else:
+                num = 1
+            sub.codigo = f"SA{num:03d}"
+            
+        sub.save()
+        messages.success(request, f'Sub Atención registrada con código {sub.codigo}.')
         return redirect('listado_sub_atenciones')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Nueva Sub Atención'})
+        
+    return render(request, 'seguimientoWeb/form_funcionario.html', {
+        'form': form,
+        'modulo': 'Sub Atención',
+        'titulo': 'Nueva Sub Atención'
+    })
 
 @login_required
 def editar_sub_atencion(request, id):
@@ -558,7 +601,11 @@ def editar_sub_atencion(request, id):
         form.save()
         messages.success(request, 'Sub Atención modificada.')
         return redirect('listado_sub_atenciones')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': f'Editar Sub Atención: {obj.nombre}'})
+    return render(request, 'seguimientoWeb/form_funcionario.html', {
+        'form': form,
+        'modulo': 'Sub Atención',
+        'titulo': f'Editar Sub Atención: {obj.nombre}'
+    })
 
 @login_required
 def eliminar_sub_atencion(request, id):
