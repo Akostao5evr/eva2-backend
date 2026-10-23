@@ -1,12 +1,17 @@
-# Variables de entorno y secretos
-.env
-
-# Entornos virtuales
-entorno/
-venv/
-ENV/
-
-# Temporales de Python y Django
+.venv/
 __pycache__/
-*.pyc
+*.py[cod]
+venv/
+env/
+*$py.class
+*.so
 *.sqlite3
+.DS_Store
+*.log
+.env
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+*.bak
