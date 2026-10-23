@@ -1,0 +1,110 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-start mb-3">
+    <div>
+        <div class="text-muted small">Gestión municipal / Atenciones y Actividades</div>
+        <h3 class="fw-bold m-0">Registro de Atenciones y Evidencias</h3>
+    </div>
+    <a href="{% url 'crear_actividad' %}" class="btn btn-muni px-3 py-2">
+        + Nuevo registro
+    </a>
+</div>
+
+<form method="GET" class="row g-2 align-items-end mb-4">
+    <div class="col-md-6">
+        <label class="form-label text-muted small mb-1">Búsqueda inteligente</label>
+        <input type="text" name="q" class="form-control" placeholder="Buscar por código, funcionario o descripción...">
+    </div>
+    <div class="col-md-3">
+        <a href="?export=excel" class="btn btn-muni-soft w-100">Exportar a Excel</a>
+    </div>
+    <div class="col-md-3">
+        <select name="estado" class="form-select">
+            <option value="">Filtrar estado</option>
+            <option value="PENDIENTE">Pendiente</option>
+            <option value="APROBADO">Aprobado</option>
+            <option value="RECHAZADO">Rechazado</option>
+        </select>
+    </div>
+</form>
+
+<div class="table-responsive">
+    <table class="table table-muni">
+        <thead>
+            <tr>
+                <th>Código</th>
+                <th>Funcionario</th>
+                <th>Delegación</th>
+                <th>Descripción</th>
+                <th>Fecha</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for act in actividades %}
+            <tr>
+                <td><strong>{{ act.codigo_verificador }}</strong></td>
+                <td>{{ act.funcionario.nombre }} {{ act.funcionario.apellido }}</td>
+                <td>{{ act.delegacion.nombre }}</td>
+                <td>{{ act.descripcion }}</td>
+                <td>{{ act.fecha_registro|date:"d/m/Y H:i" }}</td>
+                <td>
+                    {% if act.estado == 'APROBADO' %}
+                        Aprobado
+                    {% elif act.estado == 'RECHAZADO' %}
+                        Rechazado
+                    {% else %}
+                        Pendiente
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="#" class="action-link">Ver</a>
+                    <a href="#" class="action-link">Editar</a>
+                    <a href="#" class="action-link text-secondary">Eliminar</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center text-muted py-4">No hay actividades registradas.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div class="text-muted small">
+        Mostrando 1 a {{ actividades|length }} de {{ actividades|length }} registros
+    </div>
+    <nav>
+        <ul class="pagination pagination-sm m-0">
+            <li class="page-item disabled"><span class="page-link">Anterior</span></li>
+            <li class="page-item active"><span class="page-link" style="background-color: #AD0000; border-color: #AD0000;">1</span></li>
+            <li class="page-item disabled"><span class="page-link">Siguiente</span></li>
+        </ul>
+    </nav>
+</div>
+<!-- Contenedor seguro de mensajes Django -->
+{% if messages %}
+    <div id="django-messages" style="display: none;">
+        {% for message in messages %}
+            <div data-tag="{% if 'success' in message.tags %}success{% elif 'error' in message.tags %}error{% else %}info{% endif %}" data-text="{{ message|escapejs }}"></div>
+        {% endfor %}
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const msgs = document.querySelectorAll('#django-messages div');
+            msgs.forEach(function(el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Atención Ciudadana',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
+                });
+            });
+        });
+    </script>
+{% endif %}
+{% endblock %}

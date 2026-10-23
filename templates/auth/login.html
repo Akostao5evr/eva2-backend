@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión - SGR Municipalidad de La Serena</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .card-login { max-width: 420px; width: 100%; border-radius: 10px; border: none; }
+        .bg-muni { background-color: #AD0000; }
+        .btn-muni { background-color: #AD0000; color: #fff; }
+        .btn-muni:hover { background-color: #8c0000; color: #fff; }
+    </style>
+</head>
+<body>
+    <div class="card card-login shadow">
+        <div class="card-header bg-muni text-white text-center py-4 rounded-top">
+            <i class="bi bi-shield-lock-fill fs-1"></i>
+            <h4 class="fw-bold mt-2 mb-0">SGR - La Serena</h4>
+            <small class="text-white-50">Sistema de Gestión de Resultados</small>
+        </div>
+        <div class="card-body p-4">
+            <form method="post" id="formLogin" novalidate>
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Usuario o RUT</label>
+                    <input type="text" id="username" name="username" class="form-control" placeholder="Ej: admin o 19.876.543-2" required autofocus>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label text-secondary small fw-bold">Contraseña</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required>
+                </div>
+                <div class="d-flex justify-content-end mb-3">
+                    <a href="{% url 'recuperar_paso1' %}" class="small text-decoration-none" style="color: #AD0000;">¿Olvidó su contraseña?</a>
+                </div>
+                <button type="submit" class="btn btn-muni w-100 py-2 fw-bold">Ingresar al Sistema</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Contenedor seguro para mensajes Django -->
+    {% if messages %}
+        <div id="django-messages" style="display: none;">
+            {% for m in messages %}
+                <span data-tag="{% if 'success' in m.tags %}success{% elif 'error' in m.tags %}error{% else %}warning{% endif %}" data-text="{{ m|escapejs }}"></span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mostrar mensajes devueltos por Django (ej: credenciales erróneas)
+            var serverMsgs = document.querySelectorAll('#django-messages span');
+            serverMsgs.forEach(function (el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Autenticación',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
+                });
+            });
+
+            // Validador cliente antes de enviar
+            var form = document.getElementById('formLogin');
+            var user = document.getElementById('username');
+            var pass = document.getElementById('password');
+
+            form.addEventListener('submit', function (e) {
+                if (!user.value.trim() || !pass.value.trim()) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Datos requeridos',
+                        text: 'Por favor complete tanto su usuario/RUT como su contraseña.',
+                        confirmButtonColor: '#AD0000'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

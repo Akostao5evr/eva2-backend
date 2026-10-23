@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Código de Verificación - SGR</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: Arial, sans-serif; height: 100vh; display: flex; align-items: center; justify-content: center; margin: 0; }
+        .bg-muni { background-color: #AD0000; }
+        .btn-muni { background-color: #AD0000; color: #fff; }
+        .btn-muni:hover { background-color: #8c0000; color: #fff; }
+        .otp-input { letter-spacing: 5px; font-weight: bold; font-size: 1.6rem; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="card shadow border-0" style="max-width: 440px; width: 100%;">
+        <div class="card-header bg-muni text-white text-center py-3">
+            <h5 class="fw-bold mb-0">Código de Verificación</h5>
+            <small class="text-white-50">Paso 2 de 3: Validación OTP</small>
+        </div>
+        <div class="card-body p-4 text-center">
+            <p class="text-muted small">Ingrese el código de 6 dígitos emitido para <strong>{{ email }}</strong>:</p>
+            <form method="post" id="formOTP" novalidate>
+                {% csrf_token %}
+                <div class="mb-4">
+                    <input type="text" id="codigo" name="codigo" maxlength="6" class="form-control otp-input" placeholder="000000" required autofocus>
+                </div>
+                <div class="d-flex gap-2">
+                    <a href="{% url 'recuperar_paso1' %}" class="btn btn-light border w-50">Reintentar</a>
+                    <button type="submit" class="btn btn-muni w-50">Validar Código</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {% if messages %}
+        <div id="django-messages" style="display: none;">
+            {% for m in messages %}
+                <span data-tag="{% if 'success' in m.tags %}success{% elif 'error' in m.tags %}error{% else %}warning{% endif %}" data-text="{{ m|escapejs }}"></span>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            var serverMsgs = document.querySelectorAll('#django-messages span');
+            serverMsgs.forEach(function (el) {
+                Swal.fire({
+                    icon: el.getAttribute('data-tag'),
+                    title: 'Verificación OTP',
+                    text: el.getAttribute('data-text'),
+                    confirmButtonColor: '#AD0000'
+                });
+            });
+
+            var form = document.getElementById('formOTP');
+            var inputCodigo = document.getElementById('codigo');
+
+            form.addEventListener('submit', function (e) {
+                var cod = inputCodigo.value.trim();
+                if (cod.length !== 6 || isNaN(cod)) {
+                    e.preventDefault();
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Código inválido',
+                        text: 'El código debe contener exactamente 6 dígitos numéricos.',
+                        confirmButtonColor: '#AD0000'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

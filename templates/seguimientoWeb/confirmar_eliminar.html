@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card border-danger shadow-sm col-md-6 mx-auto">
+        <div class="card-header bg-danger text-white">
+            <h4 class="mb-0">Confirmar Eliminación</h4>
+        </div>
+        <div class="card-body text-center">
+            <p class="lead">¿Estás seguro de que deseas eliminar al funcionario?</p>
+            <p><strong>{{ funcionario.nombre }} {{ funcionario.apellido }}</strong> (RUT: {{ funcionario.rut }})</p>
+            
+            <form method="POST">
+                {% csrf_token %}
+                <a href="{% url 'listado_funcionarios' %}" class="btn btn-secondary me-2">Cancelar</a>
+                <button type="submit" class="btn btn-danger">Confirmar y Eliminar</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
