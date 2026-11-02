@@ -17,15 +17,23 @@ def home(request):
 	desempenos = Desempeno.objects.all()
 	query = request.GET.get('q', '').strip()
 
-	if request.user.delegacion_id:
-		delegation_id = request.user.delegacion_id
-		registros = registros.filter(autor__delegacion_id=delegation_id)
+	delegation = request.user.delegacion_actual
+	if delegation:
+		delegation_id = delegation.delegacion_id
+		registros = registros.filter(
+			autor__usuariodelegacion__delegacion_id=delegation_id,
+			autor__usuariodelegacion__fecha_fin__isnull=True,
+		).distinct()
 		compromisos = compromisos.filter(agenda__delegacion_id=delegation_id)
 		evidencias = evidencias.filter(
-			registro__autor__delegacion_id=delegation_id,
+			registro__autor__usuariodelegacion__delegacion_id=delegation_id,
+			registro__autor__usuariodelegacion__fecha_fin__isnull=True,
 		) | evidencias.filter(compromiso__agenda__delegacion_id=delegation_id)
-		desempenos = desempenos.filter(usuario__delegacion_id=delegation_id)
-		scope_label = request.user.delegacion.nombre
+		desempenos = desempenos.filter(
+			usuario__usuariodelegacion__delegacion_id=delegation_id,
+			usuario__usuariodelegacion__fecha_fin__isnull=True,
+		).distinct()
+		scope_label = delegation.delegacion.nombre
 	elif request.user.is_superuser:
 		scope_label = 'Visión general'
 	else:
@@ -45,7 +53,7 @@ def home(request):
 		)
 
 	summary = desempenos.values(
-		delegacion=F('usuario__delegacion__nombre'),
+		delegacion=F('usuario__usuariodelegacion__delegacion__nombre'),
 		periodo_nombre=F('periodo__nombre'),
 	).annotate(meta_total=Sum('meta'), avance_total=Sum('avance')).order_by(
 		'delegacion', 'periodo_nombre',

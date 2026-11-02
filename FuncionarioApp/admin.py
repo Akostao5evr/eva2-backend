@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import AtencionSocial, GestionAtencion, Registro
-
+from FuncionarioApp.models import Registro
+from CoordinadorApp.models import AtencionSocial, GestionAtencion
 
 @admin.register(Registro)
 class RegistroAdmin(admin.ModelAdmin):
@@ -13,14 +13,14 @@ class RegistroAdmin(admin.ModelAdmin):
 
 @admin.register(AtencionSocial)
 class AtencionSocialAdmin(admin.ModelAdmin):
-	list_display = ('usuario', 'tipo_atencion', 'fecha', 'creado')
+	list_display = ('autor', 'beneficiado', 'tipo_atencion', 'gestion_atencion', 'fecha', 'creado')
 	list_filter = ('tipo_atencion', 'fecha')
-	search_fields = ('usuario__email', 'tipo_atencion', 'resultado')
+	search_fields = ('autor__email', 'beneficiado__nombre', 'tipo_atencion__nombre', 'resultado')
 	readonly_fields = ('creado',)
 
 
 @admin.register(GestionAtencion)
 class GestionAtencionAdmin(admin.ModelAdmin):
-	list_display = ('atencion', 'numero_gestion', 'fecha')
+	list_display = ('numero_gestion', 'fecha', 'observaciones')
 	list_filter = ('numero_gestion', 'fecha')
-	search_fields = ('atencion__usuario__email', 'resultado')
+	search_fields = ('observaciones',)

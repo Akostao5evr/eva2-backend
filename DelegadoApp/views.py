@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.db.models.deletion import ProtectedError
 from django.shortcuts import get_object_or_404, redirect, render
 
+from AdminApp.models import UsuarioDelegacion
 from config.decorators import cargo_required
 from CoordinadorApp.models import Periodo
 from DelegadoApp.forms import CompromisoEstadoForm, CompromisoForm
@@ -10,13 +11,14 @@ from DelegadoApp.models import Agenda, Compromiso
 
 @cargo_required('delegado')
 def home(request):
-    delegation_id = request.user.delegacion_id
+    delegation = request.user.delegacion_actual
+    delegation_id = delegation.delegacion_id if delegation else None
     commitments = Compromiso.objects.none()
     if delegation_id:
         commitments = Compromiso.objects.filter(
             agenda__delegacion_id=delegation_id,
         ).select_related('agenda', 'agenda__periodo').prefetch_related(
-            'responsables', 'evidencias_compromiso',
+            'responsable', 'evidencias_compromiso',
         )
 
     if request.method == 'POST' and request.POST.get('action') == 'estado':
@@ -72,6 +74,8 @@ def home(request):
             )
             commitment = form.save(commit=False)
             commitment.agenda = agenda
+            commitment.periodo_agenda = period.pk
+            commitment.delegacion_agenda = delegation_id
             commitment.save()
             form.save_m2m()
             messages.success(
@@ -90,6 +94,15 @@ def home(request):
     return render(request, 'DelegadoApp/index.html', {
         'sgr_role': 'Delegación', 'form': form, 'commitments': commitments[:30],
         'commitment_count': commitments.count(), 'has_delegation': bool(delegation_id),
+        'delegation': delegation.delegacion if delegation else None,
+        'delegation_user_count': (
+            UsuarioDelegacion.objects.filter(
+                delegacion=delegation.delegacion,
+                fecha_fin__isnull=True,
+                usuario__is_active=True,
+            ).values('usuario_id').distinct().count()
+            if delegation else 0
+        ),
         'editing_commitment': commitment,
         'sidebar_modules': (
             'Cumplimiento de delegación', 'Agenda colectiva',

@@ -1,7 +1,6 @@
 from django import forms
 from pathlib import Path
 
-from AdminApp.models import Catalogo
 from CoordinadorApp.models import Periodo
 from CoordinadorApp.models import Item
 from FuncionarioApp.models import Registro
@@ -9,6 +8,10 @@ from config.forms import BootstrapFormMixin
 
 
 class RegistroForm(BootstrapFormMixin, forms.ModelForm):
+    fecha_cierre = forms.DateTimeField(
+        label='Fecha de cierre',
+        widget=forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+    )
     evidencia = forms.FileField(
         label='Archivo de evidencia',
         required=False,
@@ -18,14 +21,14 @@ class RegistroForm(BootstrapFormMixin, forms.ModelForm):
     class Meta:
         model = Registro
         fields = (
-            'fecha', 'periodo', 'item', 'catalogo', 'descripcion', 'accion', 'contacto',
+            'fecha', 'fecha_cierre', 'periodo', 'item', 'descripcion', 'accion', 'contacto',
             'telefono', 'incluir_en_agenda',
         )
         labels = {
             'fecha': 'Fecha de actividad',
+            'fecha_cierre': 'Fecha de cierre',
             'periodo': 'Período',
             'item': 'Ítem de medición',
-            'catalogo': 'Clasificación del servicio',
             'descripcion': 'Actividad o solicitud',
             'accion': 'Acción realizada',
             'contacto': 'Contacto',
@@ -41,13 +44,9 @@ class RegistroForm(BootstrapFormMixin, forms.ModelForm):
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['periodo'].queryset = Periodo.objects.filter(estado=Periodo.Estado.ABIERTO)
-        self.fields['catalogo'].queryset = Catalogo.objects.order_by(
-            'actividad', 'servicio', 'tipo', 'subtipo',
+        self.fields['item'].queryset = Item.objects.filter(
+            estado=Item.Estado.ACTIVO,
         )
-        if user and user.cargo_id and user.cargo.funciones_id:
-            self.fields['item'].queryset = Item.objects.filter(funcion_id=user.cargo.funciones_id)
-        else:
-            self.fields['item'].queryset = Item.objects.none()
 
     def clean_evidencia(self):
         uploaded_file = self.cleaned_data.get('evidencia')
@@ -57,4 +56,4 @@ class RegistroForm(BootstrapFormMixin, forms.ModelForm):
                 raise forms.ValidationError('Usa una imagen JPG/PNG o un documento PDF.')
             if uploaded_file.size > 5 * 1024 * 1024:
                 raise forms.ValidationError('El archivo no puede superar los 5 MB.')
-        return uploaded_file
+            return uploaded_file

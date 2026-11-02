@@ -58,7 +58,11 @@ def home(request):
             'Gestión de la medición', 'Gestión de las delegaciones',
             'Gestión de catálogos', 'Consulta del historial',
         ),
-        'users': Usuario.objects.select_related('delegacion', 'cargo').prefetch_related('roles').order_by('email')[:12],
+        'users': Usuario.objects.prefetch_related(
+            'usuariodelegacion_set__delegacion',
+            'usuariocargo_set__cargo',
+            'usuariorol_set__rol',
+        ).order_by('email')[:12],
         'user_count': Usuario.objects.count(),
         'delegation_count': Delegacion.objects.count(),
         'position_count': Cargo.objects.count(),

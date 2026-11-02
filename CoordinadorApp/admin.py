@@ -11,9 +11,9 @@ class FuncionAdmin(admin.ModelAdmin):
 
 @admin.register(Item)
 class ItemAdmin(admin.ModelAdmin):
-	list_display = ('nombre', 'funcion')
-	list_filter = ('funcion',)
-	search_fields = ('nombre', 'funcion__nombre')
+	list_display = ('codigo', 'nombre', 'ponderacion', 'estado')
+	list_filter = ('estado',)
+	search_fields = ('codigo', 'nombre')
 
 
 @admin.register(CargoFuncion)
@@ -32,6 +32,6 @@ class PeriodoAdmin(admin.ModelAdmin):
 
 @admin.register(Desempeno)
 class DesempenoAdmin(admin.ModelAdmin):
-	list_display = ('usuario', 'funcion', 'item', 'periodo', 'meta', 'avance', 'ponderacion')
-	list_filter = ('periodo', 'funcion', 'item')
-	search_fields = ('usuario__email', 'item__nombre', 'funcion__nombre')
+	list_display = ('usuario', 'item', 'periodo', 'meta', 'avance')
+	list_filter = ('periodo', 'item')
+	search_fields = ('usuario__email', 'item__nombre')

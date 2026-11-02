@@ -40,10 +40,14 @@ def home(request):
     evidencias = Evidencia.objects.filter(estado=Evidencia.Estado.PENDIENTE).select_related(
         'registro', 'compromiso', 'supervisor',
     )
-    if request.user.delegacion_id:
+    delegation = request.user.delegacion_actual
+    if delegation:
         evidencias = evidencias.filter(
-            Q(registro__autor__delegacion_id=request.user.delegacion_id)
-            | Q(compromiso__agenda__delegacion_id=request.user.delegacion_id)
+            Q(
+                registro__autor__usuariodelegacion__delegacion_id=delegation.delegacion_id,
+                registro__autor__usuariodelegacion__fecha_fin__isnull=True,
+            )
+            | Q(compromiso__agenda__delegacion_id=delegation.delegacion_id)
         )
     elif not request.user.is_superuser:
         evidencias = Evidencia.objects.none()

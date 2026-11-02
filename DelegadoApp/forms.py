@@ -14,31 +14,39 @@ class CompromisoForm(BootstrapFormMixin, forms.ModelForm):
 
     class Meta:
         model = Compromiso
-        fields = ('periodo', 'descripcion', 'solicitante', 'territorio', 'fecha', 'responsables', 'estado', 'observaciones')
+        fields = (
+            'periodo', 'descripcion', 'solicitante', 'territorio', 'fecha',
+            'responsable', 'estado', 'observaciones', 'genera_puntaje',
+        )
         labels = {
             'descripcion': 'Compromiso',
             'solicitante': 'Solicitante',
             'territorio': 'Territorio',
             'fecha': 'Fecha comprometida',
-            'responsables': 'Responsables',
+            'responsable': 'Responsables',
             'estado': 'Estado',
             'observaciones': 'Observaciones',
         }
         widgets = {
             'fecha': forms.DateInput(attrs={'type': 'date'}),
             'observaciones': forms.Textarea(attrs={'rows': 2}),
-            'responsables': forms.SelectMultiple(attrs={'size': 4}),
+            'responsable': forms.SelectMultiple(attrs={'size': 4}),
         }
 
     def __init__(self, *args, user, **kwargs):
         super().__init__(*args, **kwargs)
-        if user.delegacion_id:
-            self.fields['responsables'].queryset = Usuario.objects.filter(
-                delegacion_id=user.delegacion_id, is_active=True,
-            ).order_by('email')
+        delegation = user.delegacion_actual
+        if delegation:
+            self.fields['responsable'].queryset = Usuario.objects.filter(
+                usuariodelegacion__delegacion=delegation.delegacion,
+                usuariodelegacion__fecha_fin__isnull=True,
+                is_active=True,
+            ).distinct().order_by('email')
         else:
-            self.fields['responsables'].queryset = Usuario.objects.none()
-        self.fields['responsables'].help_text = 'Selecciona al menos un responsable.'
+            self.fields['responsable'].queryset = Usuario.objects.none()
+        self.fields['responsable'].help_text = 'Selecciona al menos un responsable.'
+        if self.instance and self.instance.agenda_id:
+            self.fields['periodo'].initial = self.instance.agenda.periodo_id
 
 
 class CompromisoEstadoForm(BootstrapFormMixin, forms.Form):

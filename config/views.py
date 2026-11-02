@@ -7,10 +7,11 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def home_redirect(request):
-    cargo = request.user.cargo
-    if not cargo:
+    assignment = request.user.cargo_actual
+    if not assignment:
         raise PermissionDenied
 
+    cargo = assignment.cargo
     cargo_routes = {
         'funcionario': 'funcionario:home',
         'supervisor': 'supervisor:home',

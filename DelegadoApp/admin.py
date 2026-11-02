@@ -14,5 +14,5 @@ class AgendaAdmin(admin.ModelAdmin):
 class CompromisoAdmin(admin.ModelAdmin):
 	list_display = ('descripcion', 'agenda', 'fecha', 'estado')
 	list_filter = ('estado', 'agenda__delegacion', 'fecha')
-	search_fields = ('descripcion', 'solicitante', 'territorio', 'responsables__email')
-	filter_horizontal = ('responsables',)
+	search_fields = ('descripcion', 'solicitante', 'territorio', 'responsable__email')
+	filter_horizontal = ('responsable',)

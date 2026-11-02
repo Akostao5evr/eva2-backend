@@ -11,8 +11,8 @@ def cargo_required(*cargo_names):
         @wraps(view)
         @login_required
         def wrapped(request, *args, **kwargs):
-            cargo = request.user.cargo
-            if cargo and cargo.nombre.strip().casefold() in accepted_cargos:
+            assignment = request.user.cargo_actual
+            if assignment and assignment.cargo.nombre.strip().casefold() in accepted_cargos:
                 return view(request, *args, **kwargs)
             raise PermissionDenied
 
