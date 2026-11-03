@@ -59,7 +59,8 @@ def validar_clave_segura(clave):
 # ==========================================
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard_delegaciones')
+        # CAMBIO 1: Redirigir a la nueva ruta centralizada
+        return redirect('dashboard_central')
 
     if request.method == 'POST':
         usuario = request.POST.get('username', '').strip()
@@ -74,14 +75,14 @@ def login_view(request):
             if user.is_active:
                 login(request, user)
                 messages.success(request, f'Bienvenido/a al SGR, {user.first_name or user.username}.')
-                return redirect('dashboard_delegaciones')
+                # CAMBIO 2: Redirigir a la nueva ruta centralizada tras login exitoso
+                return redirect('dashboard_central')
             else:
                 messages.error(request, 'La cuenta de usuario se encuentra inactiva.')
         else:
             messages.error(request, 'Credenciales inválidas. Verifique su usuario o contraseña.')
 
     return render(request, 'auth/login.html')
-
 
 def logout_view(request):
     logout(request)
