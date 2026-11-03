@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-warning border-bottom pb-2">Dashboard Supervisor / Delegado</h2>
+    <p class="lead">Monitoreo operacional y verificación de evidencias de la delegación.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-dark">Agenda Colectiva (Tubo)</div>
+                <div class="card-body">
+                    <p>Supervisa los compromisos de tu equipo.</p>
+                    <a href="#" class="btn btn-outline-warning text-dark w-100">Ver Tubo</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-warning">
+                <div class="card-header bg-warning text-dark">Validar Evidencias</div>
+                <div class="card-body">
+                    <p>Revisa y aprueba actividades ingresadas.</p>
+                    <a href="#" class="btn btn-outline-warning text-dark w-100">Revisar Bandeja</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

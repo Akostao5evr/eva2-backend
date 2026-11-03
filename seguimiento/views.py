@@ -653,3 +653,21 @@ def api_subatenciones(request, tipo_id):
     """Devuelve las subatenciones asociadas a un Tipo de Atención en formato JSON."""
     subatenciones = SubAtencion.objects.filter(tipo_atencion_id=tipo_id, estado=True).values('id', 'codigo', 'nombre')
     return JsonResponse(list(subatenciones), safe=False)
+
+@login_required
+def dashboard_central(request):
+    # Obtenemos los nombres de los grupos a los que pertenece el usuario
+    grupos = request.user.groups.values_list('name', flat=True)
+    
+    # Lógica de Dashboards por Perfil (Requerimiento Sumativa 3)
+    if 'Administrador' in grupos:
+        # Acceso total a mantenedores y vista global
+        return render(request, 'seguimientoWeb/dashboard_admin.html')
+        
+    elif 'Delegado' in grupos or 'Coordinador' in grupos or 'Verificador' in grupos:
+        # Perfil Supervisor: Acceso intermedio operacional
+        return render(request, 'seguimientoWeb/dashboard_supervisor.html')
+        
+    else:
+        # Perfil Administrativo/Funcionario por defecto: Permisos mínimos
+        return render(request, 'seguimientoWeb/dashboard_funcionario.html')

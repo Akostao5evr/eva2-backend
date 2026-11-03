@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-success border-bottom pb-2">Mi Dashboard</h2>
+    <p class="lead">Bienvenido, {{ request.user.first_name }}. Aquí puedes gestionar tus actividades.</p>
+    
+    <div class="row mt-4">
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">Registrar Atención</div>
+                <div class="card-body">
+                    <p>Ingresa una nueva actividad o solicitud ciudadana.</p>
+                    <a href="{% url 'crear_actividad' %}" class="btn btn-outline-success w-100">Ingresar Actividad</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-3">
+            <div class="card shadow-sm border-success">
+                <div class="card-header bg-success text-white">Mis Metas</div>
+                <div class="card-body">
+                    <p>Revisa el avance de tus metas asignadas.</p>
+                    <!-- Aquí irá el HTML de la tabla de metas que te pasé en el prompt anterior -->
+                    <a href="#" class="btn btn-outline-success w-100">Ver Panel Personal</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

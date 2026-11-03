@@ -2,8 +2,8 @@ from django.urls import path
 from . import views
 
 urlpatterns = [
-    # Tus rutas originales
-    path('dashboard/', views.dashboard_delegaciones, name='dashboard_delegaciones'),
+    
+    path('dashboard/', views.dashboard_central, name='dashboard_central'),
     path('tickets/', views.listado_tickets, name='listado_tickets'),
     path('actividades/', views.listado_actividades, name='listado_actividades'),
     path('actividades/nueva/', views.crear_actividad, name='crear_actividad'),

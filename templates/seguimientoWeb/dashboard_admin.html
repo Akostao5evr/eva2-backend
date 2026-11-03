@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-danger border-bottom pb-2">Dashboard Administrador Global</h2>
+    <p class="lead">Acceso total al sistema y mantenedores.</p>
+    
+    <div class="row mt-4">
+        <!-- Mantenedores -->
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">Gestión de Usuarios</div>
+                <div class="card-body">
+                    <p>Crea y asigna roles a los funcionarios.</p>
+                    <a href="{% url 'listado_funcionarios' %}" class="btn btn-outline-danger w-100">Ir a Usuarios</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">Gestión de Catálogos</div>
+                <div class="card-body">
+                    <p>Administra tipos y subatenciones.</p>
+                    <a href="{% url 'listado_tipos_atencion' %}" class="btn btn-outline-danger w-100">Ir a Catálogos</a>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-3">
+            <div class="card shadow-sm border-danger">
+                <div class="card-header bg-danger text-white">Auditoría Global</div>
+                <div class="card-body">
+                    <p>Revisa el histórico del sistema.</p>
+                    <a href="#" class="btn btn-outline-danger w-100">Ver Auditoría</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
