@@ -1,5 +1,5 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 
 # 1. Delegaciones
 class Delegacion(models.Model):
@@ -25,6 +25,7 @@ class Cargo(models.Model):
 
 # 3. Usuarios / Funcionarios (Diseño 7 - Pág. 29)
 class Funcionario(models.Model):
+    usuario = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='funcionario')
     rut = models.CharField(max_length=12, unique=True, verbose_name="RUT")
     nombre = models.CharField(max_length=100, verbose_name="Nombre")
     apellido = models.CharField(max_length=100, verbose_name="Apellido")
