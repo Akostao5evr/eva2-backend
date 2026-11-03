@@ -151,6 +151,16 @@
 
     <!-- Contenido Dinámico de cada Vista -->
     <main class="main-content py-4">
+        
+        <!-- CONTENEDOR OCULTO PARA MENSAJES DJANGO -->
+        {% if messages %}
+            <div id="django-messages" style="display: none;">
+                {% for message in messages %}
+                    <div class="msg-item" data-tags="{{ message.tags }}" data-text="{{ message }}"></div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
         {% block content %}
         {% endblock %}
     </main>
@@ -165,5 +175,42 @@
     <!-- JS de Bootstrap y SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- LECTOR DE MENSAJES GLOBAL -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const msgContainer = document.getElementById('django-messages');
+            if (msgContainer) {
+                const items = msgContainer.querySelectorAll('.msg-item');
+                items.forEach(function(item) {
+                    const tag = item.getAttribute('data-tags');
+                    const text = item.getAttribute('data-text');
+                    
+                    let iconType = 'info';
+                    let titleText = 'Mensaje';
+                    
+                    if (tag.includes('success')) {
+                        iconType = 'success';
+                        titleText = 'Operación Exitosa';
+                    } else if (tag.includes('error')) {
+                        iconType = 'error';
+                        titleText = 'Atención';
+                    } else if (tag.includes('warning')) {
+                        iconType = 'warning';
+                        titleText = 'Advertencia';
+                    }
+
+                    Swal.fire({
+                        icon: iconType,
+                        title: titleText,
+                        text: text,
+                        confirmButtonColor: '#AD0000',
+                        timer: 4000,
+                        timerProgressBar: true
+                    });
+                });
+            }
+        });
+    </script>
 </body>
 </html>
