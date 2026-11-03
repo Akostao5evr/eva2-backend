@@ -11,7 +11,18 @@ except ImportError:
 class FuncionarioForm(forms.ModelForm):
     class Meta:
         model = Funcionario
-        fields = ['rut', 'nombre', 'apellido', 'delegacion', 'cargo']
+        # Agregamos el correo explícitamente aquí
+        fields = ['rut', 'nombre', 'apellido', 'correo', 'delegacion', 'cargo']
+        
+        # Le damos los estilos de Bootstrap (form-control) a todos los campos
+        widgets = {
+            'rut': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Ej: 12.345.678-9'}),
+            'nombre': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Nombres'}),
+            'apellido': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Apellidos'}),
+            'correo': forms.EmailInput(attrs={'class': 'form-control', 'required': 'True', 'placeholder': 'usuario@laserena.cl'}),
+            'delegacion': forms.Select(attrs={'class': 'form-select'}),
+            'cargo': forms.Select(attrs={'class': 'form-select'}),
+        }
 
 class DelegacionForm(forms.ModelForm):
     class Meta:
