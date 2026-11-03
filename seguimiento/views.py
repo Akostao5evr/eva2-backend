@@ -363,11 +363,47 @@ def listado_funcionarios(request):
 def agregar_funcionario(request):
     form = FuncionarioForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
-        messages.success(request, 'Usuario registrado exitosamente.')
-        return redirect('listado_funcionarios')
-    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Agregar Nuevo Usuario'})
+        funcionario = form.save(commit=False)
+        funcionario.save() # Guardamos el funcionario primero para tener los datos
 
+        # CREACIÓN AUTOMÁTICA O VINCULACIÓN CON EL USER NATIVO DE DJANGO
+        username_rut = funcionario.rut.strip()
+        email_func = getattr(funcionario, 'correo', '').strip()
+
+        # Buscamos si ya existe un User con ese RUT o correo, sino lo creamos
+        user = User.objects.filter(username=username_rut).first()
+        if not user and email_func:
+            user = User.objects.filter(email=email_func).first()
+
+        if not user:
+            # Creamos el usuario nativo con una contraseña temporal segura
+            temporal_password = "Sgr@1234!"
+            user = User.objects.create_user(
+                username=username_rut,
+                email=email_func,
+                password=temporal_password,
+                first_name=funcionario.nombre,
+                last_name=funcionario.apellido
+            )
+            # Opcional: imprimir en consola la clave temporal para pruebas
+            print(f"\n[SGR] Usuario Django creado para {username_rut} con clave temporal: {temporal_password}\n")
+        else:
+            # Si ya existía, actualizamos su correo y nombre por si acaso
+            if email_func:
+                user.email = email_func
+            user.first_name = funcionario.nombre
+            user.last_name = funcionario.apellido
+            user.save()
+
+        # Asignar al grupo por defecto 'Funcionario'
+        from django.contrib.auth.models import Group
+        grupo_func, _ = Group.objects.get_or_create(name='Funcionario')
+        user.groups.add(grupo_func)
+
+        messages.success(request, f'Usuario {funcionario.nombre} registrado exitosamente. Cuenta de acceso generada para el RUT {username_rut}.')
+        return redirect('listado_funcionarios')
+
+    return render(request, 'seguimientoWeb/form_funcionario.html', {'form': form, 'titulo': 'Agregar Nuevo Usuario'})
 @login_required
 @admin_requerido
 def editar_funcionario(request, id):
