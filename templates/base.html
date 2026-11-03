@@ -48,7 +48,7 @@
     <!-- Navegación Principal Institucional -->
     <nav class="navbar navbar-expand-xl navbar-dark shadow-sm" style="background-color: #AD0000 !important;">
         <div class="container-fluid">
-            <a class="navbar-brand me-4" href="{% url 'dashboard_delegaciones' %}">
+            <a class="navbar-brand me-4" h<a href="{% url 'dashboard_central' %}">Inicio</a>">
                 <i class="bi bi-building-fill-gear me-2"></i>SGR - La Serena
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
@@ -61,7 +61,7 @@
                     {% if user.is_authenticated %}
                         <!-- 1. Enlace Común: Inicio / Dashboard -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'dashboard_delegaciones' %}">
+                            <a class="nav-link" h<a href="{% url 'dashboard_central' %}">Inicio</a>">
                                 <i class="bi bi-speedometer2 me-1"></i> Inicio
                             </a>
                         </li>
